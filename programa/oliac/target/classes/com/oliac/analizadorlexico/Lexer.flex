@@ -17,11 +17,10 @@
   }
 %}
 
-%%
 /* Definiciones de expresiones regulares */
 
 /*Literales*/
-int_literal = -?( 0 | [1-9][0-9]*)
+int_literal = -?( 0 | [1-9][0-9]*);
 float_literal = -?( 0 | [1-9][0-9]*\.[0-9]*[1-9])
 boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
@@ -87,60 +86,58 @@ block_comment = "{" (.)* "}"
 
 {space}                     { /* Ignorar espacios y saltos de línea */ }
 
-{int_literal}               { return symbol(sym.INT_LITERAL); }
-{float_literal}             { return symbol(sym.FLOAT_LITERAL); }
-{boolean_literal}           { return symbol(sym.BOOLEAN_LITERAL); }
-{string_literal}            { return symbol(sym.STRING_LITERAL); }
-{char_literal}              { return symbol(sym.CHAR_LITERAL); }
-{ID}                        { return symbol(sym.ID); }
+{int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
+{float_literal}             { return symbol(sym.FLOAT_LITERAL, yytext()); }
+{boolean_literal}           { return symbol(sym.BOOLEAN_LITERAL, yytext()); }
+{string_literal}            { return symbol(sym.STRING_LITERAL, yytext()); }
+{char_literal}              { return symbol(sym.CHAR_LITERAL, yytext()); }
 
-{if}                        { return symbol(sym.IF); }
-{elif}                      { return symbol(sym.ELIF); }
-{else}                      { return symbol(sym.ELSE); }
-{while}                     { return symbol(sym.WHILE); }
-{for}                       { return symbol(sym.FOR); }
-{case}                      { return symbol(sym.CASE); }
+{if}                        { return symbol(sym.IF, yytext()); }
+{elif}                      { return symbol(sym.ELIF, yytext()); }
+{else}                      { return symbol(sym.ELSE, yytext()); }
+{while}                     { return symbol(sym.WHILE, yytext()); }
+{for}                       { return symbol(sym.FOR, yytext()); }
+{case}                      { return symbol(sym.CASE, yytext()); }
 
-{int}                       { return symbol(sym.INT); }
-{float}                     { return symbol(sym.FLOAT); }
-{boolean}                   { return symbol(sym.BOOLEAN); }
-{char}                      { return symbol(sym.CHAR); }
-{string}                    { return symbol(sym.STRING); }
+{int}                       { return symbol(sym.INT, yytext()); }
+{float}                     { return symbol(sym.FLOAT, yytext()); }
+{boolean}                   { return symbol(sym.BOOLEAN, yytext()); }
+{char}                      { return symbol(sym.CHAR, yytext()); }
+{string}                    { return symbol(sym.STRING, yytext()); }
 
-{int_matrix}                { return symbol(sym.INT_MATRIX); }
-{float_matrix}              { return symbol(sym.FLOAT_MATRIX); }
-{string_matrix}             { return symbol(sym.STRING_MATRIX); }
-{char_matrix}               { return symbol(sym.CHAR_MATRIX); }
-{boolean_matrix}            { return symbol(sym.BOOLEAN_MATRIX); }
+{int_matrix}                { return symbol(sym.INT_MATRIX, yytext()); }
+{float_matrix}              { return symbol(sym.FLOAT_MATRIX, yytext()); }
+{string_matrix}             { return symbol(sym.STRING_MATRIX, yytext()); }
+{char_matrix}               { return symbol(sym.CHAR_MATRIX, yytext()); }
+{boolean_matrix}            { return symbol(sym.BOOLEAN_MATRIX, yytext()); }
 
-"++"                        { return symbol(sym.ADDITION_ONE); }
-"--"                        { return symbol(sym.SUBTRACT_ONE); }
-"**"                        { return symbol(sym.POWERS); }
-"+"                         { return symbol(sym.ADDITION); }
-"-"                         { return symbol(sym.SUBTRACT); }
-"*"                         { return symbol(sym.MULTIPLICATION); }
-"//"                        { return symbol(sym.DIVISION); }
-"~"                         { return symbol(sym.MODULE); }
+{adition_one}               { return symbol(sym.ADDITION_ONE, yytext()); }
+{substract_one}             { return symbol(sym.SUBTRACT_ONE, yytext()); }
+{powers}                    { return symbol(sym.POWERS, yytext()); }
+{addition}                  { return symbol(sym.ADDITION, yytext()); }
+{subtract}                  { return symbol(sym.SUBTRACT, yytext()); }
+{multiplication}            { return symbol(sym.MULTIPLICATION, yytext()); }
+{division}                  { return symbol(sym.DIVISION, yytext()); }
+{module}                    { return symbol(sym.MODULE, yytext()); }
 
-"^"                         { return symbol(sym.CONJUNCTION); }
-"#"                         { return symbol(sym.DISJUNCTION); }
-"!"                         { return symbol(sym.DENIAL); }
+{conjunction}               { return symbol(sym.CONJUNCTION, yytext()); }
+{disjunction}               { return symbol(sym.DISJUNCTION, yytext()); }
+{denial}                    { return symbol(sym.DENIAL, yytext()); }
 
-{equal}                     { return symbol(sym.EQ); }
-{not_equal}                 { return symbol(sym.NEQ); }
-{less_equal}                { return symbol(sym.LE); }
-{less_than}                 { return symbol(sym.LT); }
-{greater_equal}             { return symbol(sym.GE); }
-{greater_than}              { return symbol(sym.GT); } 
+{equal}                     { return symbol(sym.EQ, yytext()); }
+{not_equal}                 { return symbol(sym.NEQ, yytext()); }
+{less_equal}                { return symbol(sym.LE, yytext()); }
+{less_than}                 { return symbol(sym.LT, yytext()); }
+{greater_equal}             { return symbol(sym.GE, yytext()); }
+{greater_than}              { return symbol(sym.GT, yytext()); } 
 
-{left_bracket}              { return symbol(sym.LBRACKET); }
-{right_bracker}             { return symbol(sym.RBRACKET); }
-{comma}                     { return symbol(sym.COMMA); }
+{left_bracket}              { return symbol(sym.LBRACKET, yytext()); }
+{right_bracker}             { return symbol(sym.RBRACKET, yytext()); }
+{comma}                     { return symbol(sym.COMMA, yytext()); }
 
-comment                     { /* Ignorar espacios y saltos de línea */ }
-block_comment               { /* Ignorar espacios y saltos de línea */ }
+{comment}                   { /* Ignorar espacios y saltos de línea */ }
+{block_comment}             { /* Ignorar espacios y saltos de línea */ }
+
+{ID}                        { return symbol(sym.ID, yytext()); }
 
 .                           { System.err.println("Carácter inesperado: " + yytext() + " en línea " + (yyline+1)); }
-
-%%
-
