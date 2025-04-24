@@ -1,3 +1,5 @@
+package lexicalanalyzer;
+
 // Nombre del parser
 parser code { :parser MiParser :; }
 

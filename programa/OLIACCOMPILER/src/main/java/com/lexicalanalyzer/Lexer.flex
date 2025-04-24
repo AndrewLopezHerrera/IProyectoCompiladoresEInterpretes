@@ -1,3 +1,5 @@
+import lexicalanalyzer.sym.*;
+
 %%
 
 %class MiLexer            // Clase generada: MiLexer
@@ -40,6 +42,8 @@ else = "else"
 while = "while"
 for = "for"
 case = "case"
+switch = "switch"
+do = "do"
 
 /*Tipos de datos*/
 int = "int"
@@ -80,6 +84,13 @@ greater_than = ">"
 comment = "@"
 block_comment = "{" (.)* "}"
 
+/*Otros*/
+parenthesis_L = "\("
+parenthesis_R = "\)"
+end_line = "\?"
+open_block = "\\"
+close_block = "\/"
+
 %%
 
 /* Reglas léxicas y acciones (acciones de Java) */
@@ -98,6 +109,8 @@ block_comment = "{" (.)* "}"
 {while}                     { return symbol(sym.WHILE, yytext()); }
 {for}                       { return symbol(sym.FOR, yytext()); }
 {case}                      { return symbol(sym.CASE, yytext()); }
+{switch}                    { return symbol(sym.SWITCH, yytext()); }
+{do}                        { return symbol(sym.DO, yytext()); }
 
 {int}                       { return symbol(sym.INT, yytext()); }
 {float}                     { return symbol(sym.FLOAT, yytext()); }
@@ -137,6 +150,12 @@ block_comment = "{" (.)* "}"
 
 {comment}                   { /* Ignorar espacios y saltos de línea */ }
 {block_comment}             { /* Ignorar espacios y saltos de línea */ }
+
+{parenthesis_L}             { return symbol(sym.PARENTHESIS_L, yytext()); }
+{parenthesis_R}             { return symbol(sym.PARENTHESIS_R, yytext()); }
+{end_line}                  { return symbol(sym.END_LINE, yytext()); }
+{open_block}                { return symbol(sym.OPEN_BLOCK, yytext()); }
+{close_block}               { return symbol(sym.CLOSE_BLOCK, yytext()); }
 
 {ID}                        { return symbol(sym.ID, yytext()); }
 
