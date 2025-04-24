@@ -20,6 +20,8 @@ import lexicalanalyzer.sym.*;
 %}
 
 /* Definiciones de expresiones regulares */
+/*Asignacion*/
+equal = "="
 
 /*Literales*/
 int_literal = -?( 0 | [1-9][0-9]*);
@@ -44,6 +46,7 @@ for = "for"
 case = "case"
 switch = "switch"
 do = "do"
+break = "break"
 
 /*Tipos de datos*/
 int = "int"
@@ -73,7 +76,7 @@ disjunction = "#"
 denial = "!"
 
 /*Operadores de comparación*/
-equal = "=="
+assign = "=="
 not_equal = "!="
 less_equal = "<="
 less_than = "<"
@@ -85,15 +88,26 @@ comment = "@"
 block_comment = "{" (.)* "}"
 
 /*Otros*/
-parenthesis_L = "\("
-parenthesis_R = "\)"
+parenthesis_L = "("
+parenthesis_R = ")"
 end_line = "\?"
 open_block = "\\"
-close_block = "\/"
+close_block = "/"
+main = "main"
+
+/*Lectura escritura*/
+read_int = "readInt" [ \t\r\n]* "<-" [ \t\r\n]* 
+read_float = "readFloat" [ \t\r\n]* "<-" [ \t\r\n]* 
+write_int = "writeInt" [ \t\r\n]* "->" [ \t\r\n]*
+write_float = "writeFloat" [ \t\r\n]* "->" [ \t\r\n]*
+write_string = "writeString" [ \t\r\n]* "->" [ \t\r\n]*
+write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]* 
 
 %%
 
 /* Reglas léxicas y acciones (acciones de Java) */
+
+{assign}                    { return symbol(sym.ASSIGN, yytext()); }
 
 {space}                     { /* Ignorar espacios y saltos de línea */ }
 
@@ -111,6 +125,7 @@ close_block = "\/"
 {case}                      { return symbol(sym.CASE, yytext()); }
 {switch}                    { return symbol(sym.SWITCH, yytext()); }
 {do}                        { return symbol(sym.DO, yytext()); }
+{break}                     { return symbol(sym.BREAK, yytext()); }
 
 {int}                       { return symbol(sym.INT, yytext()); }
 {float}                     { return symbol(sym.FLOAT, yytext()); }
@@ -156,6 +171,14 @@ close_block = "\/"
 {end_line}                  { return symbol(sym.END_LINE, yytext()); }
 {open_block}                { return symbol(sym.OPEN_BLOCK, yytext()); }
 {close_block}               { return symbol(sym.CLOSE_BLOCK, yytext()); }
+
+{read_int}                  { return symbol(sym.READ_INT, yytext()); }
+{read_float}                { return symbol(sym.READ_FLOAT, yytext()); }
+{write_int}                 { return symbol(sym.WRITE_INT, yytext()); }
+{write_float}               { return symbol(sym.WRITE_FLOAT, yytext()); }
+{write_string}              { return symbol(sym.WRITE_STRING, yytext()); }
+{write_boolean}             { return symbol(sym.WRITE_BOOLEAN, yytext()); }
+{main}                      { return symbol(sym.MAIN, yytext()); }
 
 {ID}                        { return symbol(sym.ID, yytext()); }
 
