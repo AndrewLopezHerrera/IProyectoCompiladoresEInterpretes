@@ -6,8 +6,7 @@ parser code {:
 :};
 
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
-terminal ID;
-terminal IF, ELIF, ELSE, WHILE, FOR, CASE, SWITCH, DO, BREAK;
+terminal IF, ELIF, ELSE, WHILE, FOR, DO, BREAK;
 terminal INT, FLOAT, BOOLEAN, CHAR, STRING;
 terminal INT_MATRIX, FLOAT_MATRIX, STRING_MATRIX, CHAR_MATRIX, BOOLEAN_MATRIX;
 terminal ADDITION_ONE, SUBTRACT_ONE, POWERS, ADDITION, SUBTRACT, MULTIPLICATION, DIVISION, MODULE;
@@ -18,6 +17,7 @@ terminal PARENTHESIS_L, PARENTHESIS_R, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
 terminal ASSIGN;
 terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLEAN;
 terminal RETURN, VOID, COMMENT_BLOCK, COMMENT_LINE, MAIN;
+terminal ID;
 
 // No terminales
 non terminal programa, main_func, func_decl, func_list, param_list, param, block;
@@ -31,7 +31,7 @@ non terminal array_decl;
 precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
-precedence right POWERS;   
+precedence right POWERS;
 
 start with programa;
 
@@ -89,7 +89,6 @@ assign_stmt ::=
 
 var_decl_asisgn_stmt ::=
     var_decl ASSIGN expr
-    | var_decl ASSIGN ID
     | array_decl LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr;
 
 expr ::=
@@ -97,8 +96,7 @@ expr ::=
     | rel_expr
     | logic_expr
     | literal
-    | func_call
-    | ID;
+    | func_call;
 
 arith_expr ::=
     expr ADDITION expr
@@ -170,7 +168,9 @@ comment ::=
     COMMENT_BLOCK
     | COMMENT_LINE;
 
-func_call ::= ID PARENTHESIS_L arg_list PARENTHESIS_R;
+func_call ::=
+    ID PARENTHESIS_L arg_list PARENTHESIS_R
+    | ID;
 
 arg_list ::=
     expr COMMA arg_list
