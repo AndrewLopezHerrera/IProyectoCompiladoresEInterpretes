@@ -32,6 +32,7 @@ precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
 precedence right POWERS;
+precedence left PARENTHESIS_L;
 
 start with programa;
 

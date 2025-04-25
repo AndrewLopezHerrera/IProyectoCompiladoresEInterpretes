@@ -30,6 +30,7 @@ boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
 ID = [A-Za-z][_A-Za-z0-9]*
+ID_func = [A-Za-z][_A-Za-z0-9]*
 space  = [ \t\r\n]+
 
 /* Arreglos */
@@ -43,8 +44,6 @@ elif = "elif"
 else = "else"
 while = "while"
 for = "for"
-case = "case"
-switch = "switch"
 do = "do"
 break = "break"
 
@@ -122,8 +121,6 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {else}                      { return symbol(sym.ELSE, yytext()); }
 {while}                     { return symbol(sym.WHILE, yytext()); }
 {for}                       { return symbol(sym.FOR, yytext()); }
-{case}                      { return symbol(sym.CASE, yytext()); }
-{switch}                    { return symbol(sym.SWITCH, yytext()); }
 {do}                        { return symbol(sym.DO, yytext()); }
 {break}                     { return symbol(sym.BREAK, yytext()); }
 
