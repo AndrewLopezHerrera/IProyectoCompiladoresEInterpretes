@@ -28,6 +28,11 @@ non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, comment;
 non terminal func_call, arg_list, write_stmt, read_stmt;
 non terminal array_decl;
 
+precedence left EQ, NEQ, LT, LE, GT, GE;
+precedence left ADDITION, SUBTRACT;
+precedence left MULTIPLICATION, DIVISION, MODULE;
+precedence right POWERS;   
+
 start with programa;
 
 programa ::=
@@ -58,14 +63,12 @@ stmt ::=
     var_decl END_LINE
     | assign_stmt END_LINE
     | var_decl_asisgn_stmt END_LINE
-    | assign_stmt END_LINE
     | control_struct
     | read_stmt END_LINE
     | write_stmt END_LINE
     | return_stmt END_LINE
     | break_stmt END_LINE
-    | comment
-    | var_decl_asisgn_stmt;
+    | comment;
 
 var_decl ::=
     type ID
@@ -103,8 +106,7 @@ arith_expr ::=
     | expr DIVISION expr
     | expr MULTIPLICATION expr
     | expr POWERS expr
-    | expr MODULE expr
-    | SUBTRACT expr;
+    | expr MODULE expr;
 
 rel_expr ::=
     expr LT expr
