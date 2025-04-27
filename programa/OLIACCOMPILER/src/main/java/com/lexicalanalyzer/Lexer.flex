@@ -1,4 +1,4 @@
-import lexicalanalyzer.sym.*;
+import com.lexicalanalyzer.sym.*;
 
 %%
 
