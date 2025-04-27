@@ -1,22 +1,33 @@
 package com.lexicalanalyzer;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java_cup.runtime.Symbol;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        // Abrir el archivo test.txt para analizar
-        FileReader archivo = new FileReader("test.txt");
+    public static void main(String[] args) {
+        try {
+            // Abrir el archivo de prueba
+            FileReader archivo = new FileReader("test.txt");
 
-        // Crear el Lexer (scanner)
-        MiLexer scanner = new MiLexer(archivo);
+            // Crea el analizador léxico
+            MiLexer scanner = new MiLexer(archivo);
 
-        // Crear el Parser
-        parser parserObj = new parser(scanner);
+            // Crea el analizador sintáctico
+            parser parserObj = new parser(scanner);
 
-        // Ejecutar el parseo
-        parserObj.parse();
-        
-        System.out.println("Análisis completado exitosamente.");
+            // Intenta hacer el análisis sintáctico
+            Symbol resultado = parserObj.parse();
+
+            System.out.println("Análisis sintáctico completado exitosamente.");
+
+        } catch (IOException e) {
+            System.err.println("Error de entrada/salida: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Se encontró un error durante el análisis sintáctico.");
+            //e.printStackTrace();
+        }
     }
 }
+
+
