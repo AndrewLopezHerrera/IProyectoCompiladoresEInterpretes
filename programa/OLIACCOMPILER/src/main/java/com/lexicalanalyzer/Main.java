@@ -6,7 +6,7 @@ import java_cup.runtime.Symbol;
 public class Main {
     public static void main(String[] args) throws Exception {
         // Abrir el archivo test.txt para analizar
-        FileReader archivo = new FileReader("src/com/lexicalanalyzer/test.txt");
+        FileReader archivo = new FileReader("test.txt");
 
         // Crear el Lexer (scanner)
         MiLexer scanner = new MiLexer(archivo);
