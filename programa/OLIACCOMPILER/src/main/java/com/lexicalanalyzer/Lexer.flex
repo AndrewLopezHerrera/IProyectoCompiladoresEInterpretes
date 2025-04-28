@@ -1,4 +1,6 @@
-import lexicalanalyzer.sym.*;
+package com.lexicalanalyzer;
+
+import java_cup.runtime.Symbol;
 
 %%
 
@@ -21,16 +23,15 @@ import lexicalanalyzer.sym.*;
 
 /* Definiciones de expresiones regulares */
 /*Asignacion*/
-equal = "="
+assign = "="
 
 /*Literales*/
-int_literal = -?( 0 | [1-9][0-9]*);
-float_literal = -?( 0 | [1-9][0-9]*\.[0-9]*[1-9])
+int_literal = -?(0|[1-9][0-9]*);
+float_literal = -?(0|[1-9][0-9]*\.[0-9]*[1-9])
 boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
 ID = [A-Za-z][_A-Za-z0-9]*
-ID_func = [A-Za-z][_A-Za-z0-9]*
 space  = [ \t\r\n]+
 
 /* Arreglos */
@@ -75,7 +76,7 @@ disjunction = "#"
 denial = "!"
 
 /*Operadores de comparación*/
-assign = "=="
+equal = "=="
 not_equal = "!="
 less_equal = "<="
 less_than = "<"
@@ -83,8 +84,8 @@ greater_equal = ">="
 greater_than = ">"
 
 /*Comentarios*/
-comment = "@"
-block_comment = "{" (.)* "}"
+comment = "@" [^\n]*
+block_comment = "{" [^{}\n]* (\n [^{}\n]*)* "}"
 
 /*Otros*/
 parenthesis_L = "("
@@ -93,6 +94,7 @@ end_line = "\?"
 open_block = "\\"
 close_block = "/"
 main = "main"
+void = "void"
 
 /*Lectura escritura*/
 read_int = "readInt" [ \t\r\n]* "<-" [ \t\r\n]* 
@@ -106,15 +108,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 
 /* Reglas léxicas y acciones (acciones de Java) */
 
-{assign}                    { return symbol(sym.ASSIGN, yytext()); }
-
 {space}                     { /* Ignorar espacios y saltos de línea */ }
-
-{int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
-{float_literal}             { return symbol(sym.FLOAT_LITERAL, yytext()); }
-{boolean_literal}           { return symbol(sym.BOOLEAN_LITERAL, yytext()); }
-{string_literal}            { return symbol(sym.STRING_LITERAL, yytext()); }
-{char_literal}              { return symbol(sym.CHAR_LITERAL, yytext()); }
 
 {if}                        { return symbol(sym.IF, yytext()); }
 {elif}                      { return symbol(sym.ELIF, yytext()); }
@@ -166,8 +160,6 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {parenthesis_L}             { return symbol(sym.PARENTHESIS_L, yytext()); }
 {parenthesis_R}             { return symbol(sym.PARENTHESIS_R, yytext()); }
 {end_line}                  { return symbol(sym.END_LINE, yytext()); }
-{open_block}                { return symbol(sym.OPEN_BLOCK, yytext()); }
-{close_block}               { return symbol(sym.CLOSE_BLOCK, yytext()); }
 
 {read_int}                  { return symbol(sym.READ_INT, yytext()); }
 {read_float}                { return symbol(sym.READ_FLOAT, yytext()); }
@@ -176,7 +168,19 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {write_string}              { return symbol(sym.WRITE_STRING, yytext()); }
 {write_boolean}             { return symbol(sym.WRITE_BOOLEAN, yytext()); }
 {main}                      { return symbol(sym.MAIN, yytext()); }
+{void}                      { return symbol(sym.VOID, yytext()); }
+
+{assign}                    { return symbol(sym.ASSIGN, yytext()); }
+
+{boolean_literal}           { return symbol(sym.BOOLEAN_LITERAL, yytext()); }
+{string_literal}            { return symbol(sym.STRING_LITERAL, yytext()); }
+{char_literal}              { return symbol(sym.CHAR_LITERAL, yytext()); }
+{float_literal}             { return symbol(sym.FLOAT_LITERAL, yytext()); }
+{int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
+
+{open_block}                { return symbol(sym.OPEN_BLOCK, yytext()); }
+{close_block}               { return symbol(sym.CLOSE_BLOCK, yytext()); }
 
 {ID}                        { return symbol(sym.ID, yytext()); }
 
-.                           { System.err.println("Carácter inesperado: " + yytext() + " en línea " + (yyline+1)); }
+.                           { System.err.println("Error léxico: carácter inesperado '" + yytext() + "' en línea " + (yyline + 1) + ", columna " + (yycolumn + 1) + ", posición " + yychar ); }
