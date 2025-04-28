@@ -37,8 +37,7 @@ precedence left PARENTHESIS_L;
 start with programa;
 
 programa ::=
-    main_func
-    | func_list;
+    main_func func_list | main_func;
 
 main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R block;
 
@@ -46,6 +45,7 @@ func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
 
 func_list ::=
     func_decl func_list
+    | comment func_list
     | func_decl;
 
 param_list ::=
@@ -178,7 +178,8 @@ func_call ::=
 
 arg_list ::=
     expr COMMA arg_list
-    | expr;
+    | expr
+    | ;
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 
