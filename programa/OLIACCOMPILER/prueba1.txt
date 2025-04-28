@@ -1,9 +1,42 @@
 void main() \
     int a?
-    if(true)\
-	int b?
+    a = 5?
+    if (a == 5)\
+        int b = 10?
+        a = a + b?
     /
     else\
-	char c?
+        int c = 20?
+        a = a - c?
+    /
+    do\
+        a = a - 1?
+    while (a > 0)?
+/
+
+int sumar(int x, int y)\
+    int resultado?
+    resultado = x + y?
+    return resultado?
+/
+
+float promedio(float n1, float n2, float n3)\
+    float suma?
+    suma = n1 + n2 + n3?
+    return suma / 3?
+/
+
+char letraPreferida()\
+    char letra = "A"?
+    return letra?
+/
+
+boolean esPar(int numero)\
+    if (numero - 2 == 0)\
+        return true?
+    /
+    else\
+        return false?
     /
 /
+

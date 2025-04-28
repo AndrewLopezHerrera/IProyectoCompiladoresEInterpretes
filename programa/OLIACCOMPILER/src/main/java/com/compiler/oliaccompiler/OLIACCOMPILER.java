@@ -25,7 +25,7 @@ public class OLIACCOMPILER implements Runnable {
             parser p = new parser(lexer);
 
             // Parsear
-            p.parser();
+            p.parse();
 
             // Mostrar resultado
             if (p.error_count == 0) {

@@ -2,13 +2,20 @@ package com.lexicalanalyzer;
 import java_cup.runtime.*;
 
 parser code {:
-    public void report_fatal_error(String message, Object info) {
-    System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
-    error_count++;
-    // Simula que es un error recuperable
-}
+    public int error_count = 0;
 
-:};
+    // Modificar para que reporte todos los errores
+    public void syntax_error(Symbol s) {
+        System.out.println("Error recuperable sintáctico en la línea " + (s.left+1) + ", columna " + (s.left+1) + ": " + s.value);
+        error_count++;
+    }
+
+    public void report_fatal_error(String message, Object info) {
+        System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
+        error_count++;
+    }
+:}
+
 
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
 terminal IF, ELIF, ELSE, WHILE, FOR, DO, BREAK;
@@ -57,7 +64,8 @@ param_list ::=
     param COMMA param_list
     | param;
 
-param ::= type ID | ;
+param ::= type ID
+    | /* vacío */;
 
 block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK;
 
@@ -69,6 +77,7 @@ stmt ::=
     var_decl END_LINE
     | assign_stmt END_LINE
     | var_decl_asisgn_stmt END_LINE
+    | control_struct END_LINE
     | control_struct
     | read_stmt END_LINE
     | write_stmt END_LINE
@@ -181,10 +190,9 @@ func_call ::=
     ID PARENTHESIS_L arg_list PARENTHESIS_R
     | ID;
 
-arg_list ::=
-    expr COMMA arg_list
+arg_list ::= expr COMMA arg_list
     | expr
-    | ;
+    | /* vacío */;
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 
