@@ -454,8 +454,11 @@ public class MiLexer implements java_cup.runtime.Scanner {
 
   // Método auxiliar para generar un objeto Symbol
   private Symbol symbol(int type, Object value) {
+    tablaSimbolos.agregar(type, value.toString());
+    System.out.println("Token: " + type + ", Valor: " + value);
     return new Symbol(type, yyline, yycolumn, value);
   }
+
 
 
   /**
@@ -730,7 +733,11 @@ public class MiLexer implements java_cup.runtime.Scanner {
   }
 
 
+  private TablaDeSimbolos tablaSimbolos;
 
+  public void setTablaSimbolos(TablaDeSimbolos tablaSimbolos) {
+      this.tablaSimbolos = tablaSimbolos;
+  }
 
   /**
    * Resumes scanning until the next regular expression is matched, the end of input is encountered

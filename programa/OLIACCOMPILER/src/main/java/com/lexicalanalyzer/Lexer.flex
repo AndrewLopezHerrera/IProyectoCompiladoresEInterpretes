@@ -18,8 +18,11 @@ import com.lexicalanalyzer.sym.*;
 
   // Método auxiliar para generar un objeto Symbol
   private Symbol symbol(int type, Object value) {
+    tablaSimbolos.agregar(type, value.toString());
+    System.out.println("Token: " + type + ", Valor: " + value);
     return new Symbol(type, yyline, yycolumn, value);
   }
+
 %}
 
 /* Definiciones de expresiones regulares */
@@ -107,6 +110,7 @@ write_string = "writeString" [ \t\r\n]* "->" [ \t\r\n]*
 write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]* 
 
 %%
+
 
 /* Reglas léxicas y acciones (acciones de Java) */
 

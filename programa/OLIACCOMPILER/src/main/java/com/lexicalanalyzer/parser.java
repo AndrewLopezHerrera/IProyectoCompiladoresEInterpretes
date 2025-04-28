@@ -7,6 +7,8 @@ package com.lexicalanalyzer;
 
 import java_cup.runtime.*;
 import java_cup.runtime.XMLElement;
+import java.util.List;
+import java.util.ArrayList;
 
 /** CUP v0.11b 20160615 (GIT 4ac7450) generated parser.
   */
@@ -586,6 +588,29 @@ public class parser extends java_cup.runtime.lr_parser {
         System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
     }
 
+    public class TablaDeSimbolos {
+    private List<EntradaTabla> tabla = new ArrayList<>();
+
+    public void agregar(int token, String lexema) {
+        tabla.add(new EntradaTabla(token, lexema));
+    }
+
+    public void mostrar() {
+        for (EntradaTabla entrada : tabla) {
+            System.out.println("Token: " + entrada.token + ", Valor: " + entrada.lexema);
+            }
+        }
+    }
+
+    class EntradaTabla {
+        int token;
+        String lexema;
+
+        public EntradaTabla(int token, String lexema) {
+            this.token = token;
+            this.lexema = lexema;
+        }
+    }
     public void recover() {
         try {
             Symbol next;
@@ -704,10 +729,7 @@ class CUP$parser$actions {
           case 8: // func_list ::= error func_decl 
             {
               Object RESULT =null;
-		
-      System.out.println("Se recuperó de un error en una sentencia.");
-      error_count++;
-    
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("func_list",3, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -716,10 +738,7 @@ class CUP$parser$actions {
           case 9: // func_list ::= error comment 
             {
               Object RESULT =null;
-		
-      System.out.println("Se recuperó de un error en una sentencia.");
-      error_count++;
-    
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("func_list",3, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -881,10 +900,7 @@ class CUP$parser$actions {
           case 27: // stmt ::= error END_LINE 
             {
               Object RESULT =null;
-		
-      System.out.println("Se recuperó de un error en una sentencia.");
-      error_count++;
-    
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("stmt",8, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
