@@ -25,13 +25,21 @@ public class OLIACCOMPILER implements Runnable {
             parser p = new parser(lexer);
 
             // Parsear
-            p.parse();
-            System.out.println("Parseo exitoso!");
+            p.parser();
+
+            // Mostrar resultado
+            if (p.error_count == 0) {
+                System.out.println("\n--- Parseo exitoso, sin errores sintácticos ---");
+            } else {
+                System.out.println("\n--- Parseo finalizado ---");
+                System.out.println("Cantidad de errores sintácticos detectados: " + p.error_count);
+            }
 
         } catch (Exception e) {
-            System.err.println("Error durante el parseo: " + e.getMessage()+ "\n" + e.getLocalizedMessage() + "\n" + e.toString());
+            System.err.println("Error durante el parseo: " + e.getMessage());
         }
     }
+
 
     public static void main(String[] args) {
         // Crear el objeto de la clase principal

@@ -2,7 +2,12 @@ package com.lexicalanalyzer;
 import java_cup.runtime.*;
 
 parser code {:
-    // Código del parser si necesitás
+    public void report_fatal_error(String message, Object info) {
+    System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
+    error_count++;
+    // Simula que es un error recuperable
+}
+
 :};
 
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
