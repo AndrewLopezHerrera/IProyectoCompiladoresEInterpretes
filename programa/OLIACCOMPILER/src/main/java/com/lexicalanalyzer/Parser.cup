@@ -2,18 +2,8 @@ package com.lexicalanalyzer;
 import java_cup.runtime.*;
 
 parser code {:
-    public void report_error(String message, Object info) {
-        System.err.println(">>> Error de análisis sintáctico detectado: " + message);
-        error_count++;
-    }
-
-    public void report_fatal_error(String message, Object info) {
-        System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
-        throw new Error(message);
-    }
+    // Código del parser si necesitás
 :};
-
-
 
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
 terminal IF, ELIF, ELSE, WHILE, FOR, DO, BREAK;
@@ -47,12 +37,7 @@ precedence left PARENTHESIS_L;
 start with programa;
 
 programa ::=
-    main_func
-    | func_list
-    | error {: 
-        System.out.println(">>> Error de sintaxis en el programa."); 
-        parser.error_count++; 
-    :};
+    main_func func_list | main_func;
 
 main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R block;
 
@@ -60,17 +45,16 @@ func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
 
 func_list ::=
     func_decl func_list
+    | comment func_list
     | func_decl;
 
 param_list ::=
     param COMMA param_list
-    | param
-    | error {: System.out.println(">>> Error de sintaxis en lista de parámetros."); parser.error_count++; :};;
+    | param;
 
 param ::= type ID | ;
 
-block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK
-    | error CLOSE_BLOCK {: System.out.println(">>> Error de sintaxis en un bloque."); parser.error_count++; :};
+block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK;
 
 stmt_list ::=
     stmt stmt_list
@@ -85,8 +69,7 @@ stmt ::=
     | write_stmt END_LINE
     | return_stmt END_LINE
     | break_stmt END_LINE
-    | comment
-    | error END_LINE {: System.out.println(">>> Error de sintaxis en una instrucción."); parser.error_count++; :};
+    | comment;
 
 var_decl ::=
     type ID
@@ -195,7 +178,8 @@ func_call ::=
 
 arg_list ::=
     expr COMMA arg_list
-    | expr;
+    | expr
+    | ;
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 
