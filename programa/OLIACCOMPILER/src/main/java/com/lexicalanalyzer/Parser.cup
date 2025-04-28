@@ -1,5 +1,8 @@
+package com.lexicalanalyzer;
+
 // Importaciones necesarias
 import java_cup.runtime.*;
+import com.lexicalanalyzer.sym.*;
 
 package com.lexicalanalyzer;
 import lexicalanalyzer.sym.*;
@@ -36,7 +39,7 @@ terminal ID;
 non terminal programa, main_func, func_decl, func_list, param_list, param, block;
 non terminal stmt_list, stmt, var_decl, assign_stmt, var_decl_asisgn_stmt;
 non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
-non terminal if_stmt, if_elif_stmt, if_elif_else_stmt, elif_blocks, elif_block;
+non terminal if_stmt, if_elif_stmt, if_else_stmt, if_elif_else_stmt, elif_blocks, elif_block;
 non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, comment;
 non terminal func_call, arg_list, write_stmt, read_stmt;
 non terminal array_decl;
@@ -70,7 +73,7 @@ param_list ::=
     | param
     | error {: System.out.println(">>> Error de sintaxis en lista de parámetros."); parser.error_count++; :};;
 
-param ::= type ID;
+param ::= type ID | ;
 
 block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK
     | error CLOSE_BLOCK {: System.out.println(">>> Error de sintaxis en un bloque."); parser.error_count++; :};
@@ -113,11 +116,11 @@ var_decl_asisgn_stmt ::=
     | array_decl LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr;
 
 expr ::=
-    arith_expr
+    func_call
+    | arith_expr
     | rel_expr
     | logic_expr
-    | literal
-    | func_call;
+    | literal;
 
 arith_expr ::=
     expr ADDITION expr
@@ -138,21 +141,24 @@ rel_expr ::=
 logic_expr ::= PARENTHESIS_L expr CONJUNCTION expr PARENTHESIS_R | PARENTHESIS_L expr DISJUNCTION expr PARENTHESIS_R | DENIAL expr;
 
 literal ::=
-    INT_LITERAL
-    | FLOAT_LITERAL
-    | BOOLEAN_LITERAL
+    BOOLEAN_LITERAL
     | STRING_LITERAL
-    | CHAR_LITERAL;
+    | CHAR_LITERAL
+    | FLOAT_LITERAL
+    | INT_LITERAL;
 
 control_struct ::=
     if_elif_else_stmt
     | if_elif_stmt
+    | if_else_stmt
     | if_stmt
     | do_while_stmt
     | for_stmt;
 
 if_elif_else_stmt ::=
-    IF PARENTHESIS_L expr PARENTHESIS_L block elif_blocks ELSE block;
+    IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks ELSE block;
+
+if_else_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block ELSE block;
 
 if_elif_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks;
 
