@@ -1,11 +1,5 @@
 package com.lexicalanalyzer;
-
-// Importaciones necesarias
 import java_cup.runtime.*;
-import com.lexicalanalyzer.sym.*;
-
-package com.lexicalanalyzer;
-import lexicalanalyzer.sym.*;
 
 parser code {:
     // Código del parser si necesitás
