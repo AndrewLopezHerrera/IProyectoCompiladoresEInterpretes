@@ -27,8 +27,8 @@ import com.lexicalanalyzer.sym.*;
 assign = "="
 
 /*Literales*/
-int_literal = -?(0|[1-9][0-9]*);
-float_literal = -?(0|[1-9][0-9]*\.[0-9]*[1-9])
+int_literal = -?(0|[1-9][0-9]*)
+float_literal = -?(0.0|[1-9][0-9]*\.[0-9]*[1-9])
 boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
@@ -48,6 +48,7 @@ while = "while"
 for = "for"
 do = "do"
 break = "break"
+return = "return"
 
 /*Tipos de datos*/
 int = "int"
@@ -111,6 +112,8 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 
 {space}                     { /* Ignorar espacios y saltos de línea */ }
 
+{int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
+
 {if}                        { return symbol(sym.IF, yytext()); }
 {elif}                      { return symbol(sym.ELIF, yytext()); }
 {else}                      { return symbol(sym.ELSE, yytext()); }
@@ -118,6 +121,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {for}                       { return symbol(sym.FOR, yytext()); }
 {do}                        { return symbol(sym.DO, yytext()); }
 {break}                     { return symbol(sym.BREAK, yytext()); }
+{return}                    { return symbol(sym.RETURN, yytext()); }
 
 {int}                       { return symbol(sym.INT, yytext()); }
 {float}                     { return symbol(sym.FLOAT, yytext()); }
@@ -177,7 +181,6 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {string_literal}            { return symbol(sym.STRING_LITERAL, yytext()); }
 {char_literal}              { return symbol(sym.CHAR_LITERAL, yytext()); }
 {float_literal}             { return symbol(sym.FLOAT_LITERAL, yytext()); }
-{int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
 
 {open_block}                { return symbol(sym.OPEN_BLOCK, yytext()); }
 {close_block}               { return symbol(sym.CLOSE_BLOCK, yytext()); }
