@@ -6,14 +6,28 @@ parser code {:
 
     // Modificar para que reporte todos los errores
     public void syntax_error(Symbol s) {
-        System.out.println("Error recuperable sintáctico en la línea " + (s.left+1) + ", columna " + (s.left+1) + ": " + s.value);
+        if (s != null) {
+            System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.left + 1) + ": " + s.value);
+        }
         error_count++;
+        recover();
     }
 
     public void report_fatal_error(String message, Object info) {
         System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
-        error_count++;
     }
+
+    public void recover() {
+        try {
+            Symbol next;
+            do {
+                next = getScanner().next_token();
+                if (next == null) break;
+            } while (next.sym != sym.END_LINE && next.sym != sym.CLOSE_BLOCK);
+        } catch (Exception e) {
+    }
+}
+
 :}
 
 
@@ -58,7 +72,9 @@ func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
 func_list ::=
     func_decl func_list
     | comment func_list
-    | func_decl;
+    | func_decl
+    | error func_decl
+    | error comment;
 
 param_list ::=
     param COMMA param_list
@@ -83,7 +99,8 @@ stmt ::=
     | write_stmt END_LINE
     | return_stmt END_LINE
     | break_stmt END_LINE
-    | comment;
+    | comment
+    | error END_LINE;
 
 var_decl ::=
     type ID
