@@ -14,6 +14,30 @@ parser code {:
         System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
         error_count++;
     }
+
+    public class TablaDeSimbolos {
+    private List<EntradaTabla> tabla = new ArrayList<>();
+
+    public void agregar(int token, String lexema) {
+        tabla.add(new EntradaTabla(token, lexema));
+    }
+
+    public void mostrar() {
+        for (EntradaTabla entrada : tabla) {
+            System.out.println("Token: " + entrada.token + ", Valor: " + entrada.lexema);
+            }
+        }
+    }
+
+    class EntradaTabla {
+        int token;
+        String lexema;
+
+        public EntradaTabla(int token, String lexema) {
+            this.token = token;
+            this.lexema = lexema;
+        }
+    }
 :}
 
 
