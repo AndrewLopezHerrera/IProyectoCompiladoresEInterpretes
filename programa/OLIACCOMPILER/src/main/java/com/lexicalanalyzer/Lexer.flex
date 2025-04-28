@@ -1,6 +1,7 @@
 package com.lexicalanalyzer;
 
 import java_cup.runtime.Symbol;
+import com.lexicalanalyzer.sym.*;
 
 %%
 

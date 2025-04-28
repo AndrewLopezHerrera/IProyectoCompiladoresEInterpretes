@@ -1,0 +1,22 @@
+// Declaración de variables
+int a = 10;
+int b = 20;
+int resultado;
+
+// Operación aritmética
+resultado = a + b * 2;
+
+// Estructura condicional
+if (resultado > 30) {
+    resultado = resultado - 5;
+} else {
+    resultado = resultado + 5;
+}
+
+// Estructura de repetición
+while (resultado < 50) {
+    resultado = resultado + 1;
+}
+
+// Fin del programa
+
