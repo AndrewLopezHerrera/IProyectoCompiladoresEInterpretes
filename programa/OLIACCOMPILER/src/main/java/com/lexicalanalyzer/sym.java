@@ -10,11 +10,12 @@ public class sym {
   /* terminals */
   public static final int FLOAT_MATRIX = 20;
   public static final int STRING_LITERAL = 5;
-  public static final int LBRACKET = 41;
+  public static final int LBRACKET = 42;
   public static final int CHAR = 17;
   public static final int GE = 39;
   public static final int CHAR_LITERAL = 6;
   public static final int WRITE_STRING = 54;
+  public static final int BRACKET = 41;
   public static final int SUBTRACT_ONE = 25;
   public static final int SUBTRACT = 28;
   public static final int INT = 14;
@@ -25,7 +26,7 @@ public class sym {
   public static final int BOOLEAN_LITERAL = 4;
   public static final int LT = 38;
   public static final int WRITE_INT = 52;
-  public static final int COMMA = 43;
+  public static final int COMMA = 44;
   public static final int INT_MATRIX = 19;
   public static final int OPEN_BLOCK = 47;
   public static final int MAIN = 60;
@@ -37,16 +38,15 @@ public class sym {
   public static final int BOOLEAN = 16;
   public static final int RETURN = 56;
   public static final int READ_FLOAT = 51;
-  public static final int RBRACKET = 42;
+  public static final int RBRACKET = 43;
   public static final int error = 1;
   public static final int DISJUNCTION = 33;
   public static final int NEQ = 36;
-  public static final int PARENTHESIS_R = 45;
   public static final int STRING_MATRIX = 21;
   public static final int BREAK = 13;
   public static final int VOID = 57;
+  public static final int PARENTHESIS = 45;
   public static final int EQ = 35;
-  public static final int PARENTHESIS_L = 44;
   public static final int MODULE = 31;
   public static final int WRITE_FLOAT = 53;
   public static final int READ_INT = 50;
@@ -112,11 +112,11 @@ public class sym {
   "LT",
   "GE",
   "GT",
+  "BRACKET",
   "LBRACKET",
   "RBRACKET",
   "COMMA",
-  "PARENTHESIS_L",
-  "PARENTHESIS_R",
+  "PARENTHESIS",
   "END_LINE",
   "OPEN_BLOCK",
   "CLOSE_BLOCK",

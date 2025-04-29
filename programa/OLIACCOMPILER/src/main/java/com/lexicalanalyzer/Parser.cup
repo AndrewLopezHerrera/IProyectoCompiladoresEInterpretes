@@ -63,8 +63,8 @@ terminal INT_MATRIX, FLOAT_MATRIX, STRING_MATRIX, CHAR_MATRIX, BOOLEAN_MATRIX;
 terminal ADDITION_ONE, SUBTRACT_ONE, POWERS, ADDITION, SUBTRACT, MULTIPLICATION, DIVISION, MODULE;
 terminal CONJUNCTION, DISJUNCTION, DENIAL;
 terminal EQ, NEQ, LE, LT, GE, GT;
-terminal LBRACKET, RBRACKET, COMMA;
-terminal PARENTHESIS_L, PARENTHESIS_R, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
+terminal BRACKET, LBRACKET, RBRACKET, COMMA;
+terminal PARENTHESIS, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
 terminal ASSIGN;
 terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLEAN;
 terminal RETURN, VOID, COMMENT_BLOCK, COMMENT_LINE, MAIN;
@@ -75,15 +75,15 @@ non terminal programa, main_func, func_decl, func_list, param_list, param, block
 non terminal stmt_list, stmt, var_decl, assign_stmt, var_decl_asisgn_stmt;
 non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
 non terminal if_stmt, if_elif_stmt, if_else_stmt, if_elif_else_stmt, elif_blocks, elif_block;
-non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, comment;
+non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, simple_type, matrix_type, comment;
 non terminal func_call, arg_list, write_stmt, read_stmt;
-non terminal array_decl;
+non terminal array_decl, array_int_expr, array_int_expr_list, for_expr, for_assign;
 
 precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
 precedence right POWERS;
-precedence left PARENTHESIS_L;
+precedence left PARENTHESIS;
 precedence left CONJUNCTION, DISJUNCTION;
 
 start with programa;
@@ -91,9 +91,9 @@ start with programa;
 programa ::=
     main_func func_list | main_func;
 
-main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R block;
+main_func ::= VOID MAIN PARENTHESIS PARENTHESIS block;
 
-func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
+func_decl ::= type ID PARENTHESIS param_list PARENTHESIS block;
 
 func_list ::=
     func_decl func_list
@@ -124,37 +124,45 @@ stmt ::=
     | write_stmt END_LINE
     | return_stmt END_LINE
     | break_stmt END_LINE
+    | array_decl END_LINE
     | comment
     | error END_LINE;
 
 var_decl ::=
-    type ID
-    | array_decl;
+    type ID;
 
-array_decl ::=
-    type ID LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET
-    | INT_MATRIX
-    | FLOAT_MATRIX
-    | STRING_MATRIX
-    | CHAR_MATRIX
-    | BOOLEAN_MATRIX;
+array_decl ::= 
+    type ID LBRACKET INT_LITERAL RBRACKET
+    | type ID LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET
+    | matrix_type;
 
 assign_stmt ::=
     ID ASSIGN expr
+    | ID LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr
+    | ID LBRACKET INT_LITERAL RBRACKET ASSIGN expr
     | ID ADDITION_ONE
     | ID SUBTRACT_ONE;
 
 var_decl_asisgn_stmt ::=
     var_decl ASSIGN expr
-    | array_decl LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr;
+    | array_decl ASSIGN expr;
 
 expr ::=
-    PARENTHESIS_L expr PARENTHESIS_R
-    | func_call
+    func_call
+    | PARENTHESIS expr PARENTHESIS %prec PARENTHESIS
     | arith_expr
     | rel_expr
     | logic_expr
+    | array_int_expr
     | literal;
+
+array_int_expr ::=
+    BRACKET array_int_expr_list BRACKET
+    | BRACKET BRACKET;
+
+array_int_expr_list ::=
+    INT_LITERAL COMMA array_int_expr_list
+    | INT_LITERAL;
 
 arith_expr ::=
     expr ADDITION expr
@@ -174,6 +182,14 @@ rel_expr ::=
 
 logic_expr ::= expr CONJUNCTION expr | expr DISJUNCTION expr | DENIAL expr;
 
+for_expr ::=
+    logic_expr
+    | rel_expr;
+
+for_assign ::=
+    assign_stmt
+    | var_decl_asisgn_stmt;
+
 literal ::=
     BOOLEAN_LITERAL
     | STRING_LITERAL
@@ -190,52 +206,58 @@ control_struct ::=
     | for_stmt;
 
 if_elif_else_stmt ::=
-    IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks ELSE block;
+    IF PARENTHESIS expr PARENTHESIS block elif_blocks ELSE block;
 
-if_else_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block ELSE block;
+if_else_stmt ::= IF PARENTHESIS expr PARENTHESIS block ELSE block;
 
-if_elif_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks;
+if_elif_stmt ::= IF PARENTHESIS expr PARENTHESIS block elif_blocks;
 
-if_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block;
+if_stmt ::= IF PARENTHESIS expr PARENTHESIS block;
 
 elif_blocks ::=
     elif_block elif_blocks
     | elif_block;
 
-elif_block ::= ELIF PARENTHESIS_L expr PARENTHESIS_R block;
+elif_block ::= ELIF PARENTHESIS expr PARENTHESIS block;
 
-do_while_stmt ::= DO block WHILE PARENTHESIS_L expr PARENTHESIS_R;
+do_while_stmt ::= DO block WHILE PARENTHESIS expr PARENTHESIS;
 
-for_stmt ::= FOR PARENTHESIS_L assign_stmt END_LINE expr END_LINE assign_stmt PARENTHESIS_R block;
+for_stmt ::= FOR PARENTHESIS for_assign END_LINE for_expr END_LINE assign_stmt PARENTHESIS block;
 
 return_stmt ::= RETURN expr;
 
 break_stmt ::= BREAK;
 
 type ::= 
+    simple_type
+    | matrix_type
+    | VOID;
+
+simple_type ::=
     INT
     | FLOAT
     | BOOLEAN
     | CHAR
-    | STRING
-    | INT_MATRIX
+    | STRING;
+
+matrix_type ::=
+    INT_MATRIX
     | FLOAT_MATRIX
     | STRING_MATRIX
     | CHAR_MATRIX
     | BOOLEAN_MATRIX;
-
 
 comment ::= 
     COMMENT_BLOCK
     | COMMENT_LINE;
 
 func_call ::=
-    ID PARENTHESIS_L arg_list PARENTHESIS_R
+    ID PARENTHESIS arg_list PARENTHESIS %prec PARENTHESIS
+    | ID PARENTHESIS PARENTHESIS %prec PARENTHESIS
     | ID;
 
 arg_list ::= expr COMMA arg_list
-    | expr
-    | /* vacío */;
+    | expr;
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 

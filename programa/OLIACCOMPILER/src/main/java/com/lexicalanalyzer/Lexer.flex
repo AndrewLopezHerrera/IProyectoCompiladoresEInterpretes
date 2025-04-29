@@ -43,6 +43,7 @@ ID = [A-Za-z][_A-Za-z0-9]*
 space  = [ \t\r\n]+
 
 /* Arreglos */
+bracket = "|"
 left_bracket = "["
 right_bracker = "]"
 comma = ","
@@ -97,8 +98,7 @@ comment = "@" [^\n]*
 block_comment = "{" [^{}\n]* (\n [^{}\n]*)* "}"
 
 /*Otros*/
-parenthesis_L = "("
-parenthesis_R = ")"
+parenthesis = "&"
 end_line = "\?"
 open_block = "\\"
 close_block = "/"
@@ -163,6 +163,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {greater_equal}             { return symbol(sym.GE, yytext()); }
 {greater_than}              { return symbol(sym.GT, yytext()); } 
 
+{bracket}                   { return symbol(sym.BRACKET, yytext()); }
 {left_bracket}              { return symbol(sym.LBRACKET, yytext()); }
 {right_bracker}             { return symbol(sym.RBRACKET, yytext()); }
 {comma}                     { return symbol(sym.COMMA, yytext()); }
@@ -170,8 +171,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {comment}                   { /* Ignorar espacios y saltos de línea */ }
 {block_comment}             { /* Ignorar espacios y saltos de línea */ }
 
-{parenthesis_L}             { return symbol(sym.PARENTHESIS_L, yytext()); }
-{parenthesis_R}             { return symbol(sym.PARENTHESIS_R, yytext()); }
+{parenthesis}             { return symbol(sym.PARENTHESIS, yytext()); }
 {end_line}                  { return symbol(sym.END_LINE, yytext()); }
 
 {read_int}                  { return symbol(sym.READ_INT, yytext()); }
