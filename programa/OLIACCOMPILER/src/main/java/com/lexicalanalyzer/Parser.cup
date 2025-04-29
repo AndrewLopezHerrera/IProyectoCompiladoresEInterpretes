@@ -1,5 +1,7 @@
 package com.lexicalanalyzer;
 import java_cup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
 
 parser code {:
     public int error_count = 0;
@@ -7,7 +9,7 @@ parser code {:
     // Modificar para que reporte todos los errores
     public void syntax_error(Symbol s) {
         if (s != null) {
-            System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.left + 1) + ": " + s.value);
+            System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ": " + s.value);
         }
         error_count++;
         recover();
@@ -82,6 +84,7 @@ precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
 precedence right POWERS;
 precedence left PARENTHESIS_L;
+precedence left CONJUNCTION, DISJUNCTION;
 
 start with programa;
 
@@ -96,7 +99,6 @@ func_list ::=
     func_decl func_list
     | comment func_list
     | func_decl
-    | error func_decl
     | error comment;
 
 param_list ::=
@@ -147,7 +149,8 @@ var_decl_asisgn_stmt ::=
     | array_decl LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr;
 
 expr ::=
-    func_call
+    PARENTHESIS_L expr PARENTHESIS_R
+    | func_call
     | arith_expr
     | rel_expr
     | logic_expr
@@ -169,7 +172,7 @@ rel_expr ::=
     | expr EQ expr
     | expr NEQ expr;
 
-logic_expr ::= PARENTHESIS_L expr CONJUNCTION expr PARENTHESIS_R | PARENTHESIS_L expr DISJUNCTION expr PARENTHESIS_R | DENIAL expr;
+logic_expr ::= expr CONJUNCTION expr | expr DISJUNCTION expr | DENIAL expr;
 
 literal ::=
     BOOLEAN_LITERAL
