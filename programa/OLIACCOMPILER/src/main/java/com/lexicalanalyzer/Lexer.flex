@@ -35,11 +35,11 @@ assign = "="
 
 /*Literales*/
 int_literal = -?(0|[1-9][0-9]*)
-float_literal = -?(0.0|[1-9][0-9]*\.[0-9]*[1-9])
+float_literal = -?(0.0|([1-9][0-9]*|0)\.[0-9]*[1-9])
 boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
-ID = [A-Za-z][_A-Za-z0-9]*
+ID = [_A-Za-z][_A-Za-z0-9]*
 space  = [ \t\r\n]+
 
 /* Arreglos */
@@ -98,7 +98,8 @@ comment = "@" [^\n]*
 block_comment = "{" [^{}\n]* (\n [^{}\n]*)* "}"
 
 /*Otros*/
-parenthesis = "&"
+parenthesis_l = "ʃ"
+parenthesis_r = "ʅ"
 end_line = "\?"
 open_block = "\\"
 close_block = "/"
@@ -171,7 +172,8 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {comment}                   { /* Ignorar espacios y saltos de línea */ }
 {block_comment}             { /* Ignorar espacios y saltos de línea */ }
 
-{parenthesis}             { return symbol(sym.PARENTHESIS, yytext()); }
+{parenthesis_l}             { return symbol(sym.PARENTHESIS_L, yytext()); }
+{parenthesis_r}             { return symbol(sym.PARENTHESIS_R, yytext()); }
 {end_line}                  { return symbol(sym.END_LINE, yytext()); }
 
 {read_int}                  { return symbol(sym.READ_INT, yytext()); }

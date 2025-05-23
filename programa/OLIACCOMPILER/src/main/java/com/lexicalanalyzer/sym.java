@@ -14,55 +14,56 @@ public class sym {
   public static final int CHAR = 17;
   public static final int GE = 39;
   public static final int CHAR_LITERAL = 6;
-  public static final int WRITE_STRING = 54;
+  public static final int WRITE_STRING = 55;
   public static final int BRACKET = 41;
   public static final int SUBTRACT_ONE = 25;
   public static final int SUBTRACT = 28;
   public static final int INT = 14;
-  public static final int COMMENT_BLOCK = 58;
+  public static final int COMMENT_BLOCK = 59;
   public static final int CONJUNCTION = 32;
   public static final int FOR = 11;
-  public static final int END_LINE = 46;
+  public static final int END_LINE = 47;
   public static final int BOOLEAN_LITERAL = 4;
   public static final int LT = 38;
-  public static final int WRITE_INT = 52;
+  public static final int WRITE_INT = 53;
   public static final int COMMA = 44;
   public static final int INT_MATRIX = 19;
-  public static final int OPEN_BLOCK = 47;
-  public static final int MAIN = 60;
-  public static final int ASSIGN = 49;
+  public static final int OPEN_BLOCK = 48;
+  public static final int MAIN = 61;
+  public static final int ASSIGN = 50;
   public static final int IF = 7;
-  public static final int ID = 61;
+  public static final int ID = 62;
   public static final int LE = 37;
   public static final int EOF = 0;
   public static final int BOOLEAN = 16;
-  public static final int RETURN = 56;
-  public static final int READ_FLOAT = 51;
+  public static final int RETURN = 57;
+  public static final int READ_FLOAT = 52;
   public static final int RBRACKET = 43;
   public static final int error = 1;
   public static final int DISJUNCTION = 33;
   public static final int NEQ = 36;
+  public static final int PARENTHESIS_R = 46;
   public static final int STRING_MATRIX = 21;
   public static final int BREAK = 13;
-  public static final int VOID = 57;
-  public static final int PARENTHESIS = 45;
+  public static final int VOID = 58;
   public static final int EQ = 35;
+  public static final int PARENTHESIS_L = 45;
   public static final int MODULE = 31;
-  public static final int WRITE_FLOAT = 53;
-  public static final int READ_INT = 50;
+  public static final int WRITE_FLOAT = 54;
+  public static final int READ_INT = 51;
   public static final int ELSE = 9;
-  public static final int CLOSE_BLOCK = 48;
+  public static final int CLOSE_BLOCK = 49;
   public static final int DENIAL = 34;
   public static final int CHAR_MATRIX = 22;
   public static final int POWERS = 26;
   public static final int WHILE = 10;
   public static final int ADDITION_ONE = 24;
   public static final int ADDITION = 27;
-  public static final int WRITE_BOOLEAN = 55;
+  public static final int WRITE_BOOLEAN = 56;
   public static final int FLOAT = 15;
   public static final int BOOLEAN_MATRIX = 23;
   public static final int STRING = 18;
-  public static final int COMMENT_LINE = 59;
+  public static final int COMMENT_LINE = 60;
   public static final int FLOAT_LITERAL = 3;
   public static final int DIVISION = 30;
   public static final int GT = 40;
@@ -116,7 +117,8 @@ public class sym {
   "LBRACKET",
   "RBRACKET",
   "COMMA",
-  "PARENTHESIS",
+  "PARENTHESIS_L",
+  "PARENTHESIS_R",
   "END_LINE",
   "OPEN_BLOCK",
   "CLOSE_BLOCK",

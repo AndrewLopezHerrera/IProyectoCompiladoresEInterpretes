@@ -64,7 +64,7 @@ terminal ADDITION_ONE, SUBTRACT_ONE, POWERS, ADDITION, SUBTRACT, MULTIPLICATION,
 terminal CONJUNCTION, DISJUNCTION, DENIAL;
 terminal EQ, NEQ, LE, LT, GE, GT;
 terminal BRACKET, LBRACKET, RBRACKET, COMMA;
-terminal PARENTHESIS, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
+terminal PARENTHESIS_L, PARENTHESIS_R, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
 terminal ASSIGN;
 terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLEAN;
 terminal RETURN, VOID, COMMENT_BLOCK, COMMENT_LINE, MAIN;
@@ -83,7 +83,8 @@ precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
 precedence right POWERS;
-precedence left PARENTHESIS;
+precedence left PARENTHESIS_L;
+precedence left PARENTHESIS_R;
 precedence left CONJUNCTION, DISJUNCTION;
 
 start with programa;
@@ -91,9 +92,9 @@ start with programa;
 programa ::=
     main_func func_list | main_func;
 
-main_func ::= VOID MAIN PARENTHESIS PARENTHESIS block;
+main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R block;
 
-func_decl ::= type ID PARENTHESIS param_list PARENTHESIS block;
+func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
 
 func_list ::=
     func_decl func_list
@@ -125,6 +126,7 @@ stmt ::=
     | return_stmt END_LINE
     | break_stmt END_LINE
     | array_decl END_LINE
+    | func_call END_LINE
     | comment
     | error END_LINE;
 
@@ -132,16 +134,16 @@ var_decl ::=
     type ID;
 
 array_decl ::= 
-    type ID LBRACKET INT_LITERAL RBRACKET
-    | type ID LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET
+    type ID LBRACKET expr RBRACKET
+    | type ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET
     | matrix_type;
 
 assign_stmt ::=
     ID ASSIGN expr
-    | ID LBRACKET INT_LITERAL RBRACKET LBRACKET INT_LITERAL RBRACKET ASSIGN expr
-    | ID LBRACKET INT_LITERAL RBRACKET ASSIGN expr
-    | ID ADDITION_ONE
-    | ID SUBTRACT_ONE;
+    | ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
+    | ID LBRACKET expr RBRACKET ASSIGN expr
+    | ADDITION_ONE ID
+    | SUBTRACT_ONE ID;
 
 var_decl_asisgn_stmt ::=
     var_decl ASSIGN expr
@@ -149,12 +151,15 @@ var_decl_asisgn_stmt ::=
 
 expr ::=
     func_call
-    | PARENTHESIS expr PARENTHESIS %prec PARENTHESIS
+    | PARENTHESIS_L expr PARENTHESIS_R
     | arith_expr
     | rel_expr
     | logic_expr
     | array_int_expr
-    | literal;
+    | literal
+    | ID
+    | ADDITION_ONE ID
+    | SUBTRACT_ONE ID;
 
 array_int_expr ::=
     BRACKET array_int_expr_list BRACKET
@@ -170,7 +175,8 @@ arith_expr ::=
     | expr DIVISION expr
     | expr MULTIPLICATION expr
     | expr POWERS expr
-    | expr MODULE expr;
+    | expr MODULE expr
+    | SUBTRACT expr;
 
 rel_expr ::=
     expr LT expr
@@ -206,23 +212,23 @@ control_struct ::=
     | for_stmt;
 
 if_elif_else_stmt ::=
-    IF PARENTHESIS expr PARENTHESIS block elif_blocks ELSE block;
+    IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks ELSE block;
 
-if_else_stmt ::= IF PARENTHESIS expr PARENTHESIS block ELSE block;
+if_else_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block ELSE block;
 
-if_elif_stmt ::= IF PARENTHESIS expr PARENTHESIS block elif_blocks;
+if_elif_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks;
 
-if_stmt ::= IF PARENTHESIS expr PARENTHESIS block;
+if_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block;
 
 elif_blocks ::=
     elif_block elif_blocks
     | elif_block;
 
-elif_block ::= ELIF PARENTHESIS expr PARENTHESIS block;
+elif_block ::= ELIF PARENTHESIS_L expr PARENTHESIS_R block;
 
-do_while_stmt ::= DO block WHILE PARENTHESIS expr PARENTHESIS;
+do_while_stmt ::= DO block WHILE PARENTHESIS_L expr PARENTHESIS_R;
 
-for_stmt ::= FOR PARENTHESIS for_assign END_LINE for_expr END_LINE assign_stmt PARENTHESIS block;
+for_stmt ::= FOR PARENTHESIS_L for_assign END_LINE for_expr END_LINE assign_stmt PARENTHESIS_R block;
 
 return_stmt ::= RETURN expr;
 
@@ -252,9 +258,8 @@ comment ::=
     | COMMENT_LINE;
 
 func_call ::=
-    ID PARENTHESIS arg_list PARENTHESIS %prec PARENTHESIS
-    | ID PARENTHESIS PARENTHESIS %prec PARENTHESIS
-    | ID;
+    ID PARENTHESIS_L arg_list PARENTHESIS_R
+    | ID PARENTHESIS_L PARENTHESIS_R;
 
 arg_list ::= expr COMMA arg_list
     | expr;
