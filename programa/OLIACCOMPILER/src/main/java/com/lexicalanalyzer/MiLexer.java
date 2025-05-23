@@ -450,18 +450,27 @@ public class MiLexer implements java_cup.runtime.Scanner {
 
   /* user code: */
   // Este es el código Java que se incluirá al principio de la clase generada.
-  private int contador = 0;  // Variable para contar identificadores
-  private TablaDeSimbolos tablaSimbolos;
-  // Método auxiliar para generar un objeto Symbol
-  private Symbol symbol(int type, Object value) {
-    tablaSimbolos.agregar(type, value.toString());
-    System.out.println("Token: " + type + ", Valor: " + value);
-    return new Symbol(type, yyline, yycolumn, value);
-  }
+  	private int contador = 0;  // Variable para contar identificadores
+	
+	private TablaDeSimbolos tablaSimbolos;
 
-  public void setTablaSimbolos(TablaDeSimbolos pTablaSimbolos){
-    this.tablaSimbolos = pTablaSimbolos;
-  }
+	private Symbol symbol(int type, Object value) {
+    	// Solo guardamos identificadores y literales
+    		if (type == sym.ID || type == sym.INT_LITERAL || type == sym.FLOAT_LITERAL ||
+        		type == sym.STRING_LITERAL || type == sym.CHAR_LITERAL || type == sym.BOOLEAN_LITERAL) {
+      		tablaSimbolos.agregar(type, value.toString());
+    	}
+    		return new Symbol(type, yyline, yycolumn, value);
+  	}
+
+	public void setTablaSimbolos(TablaDeSimbolos pTablaSimbolos){
+    		this.tablaSimbolos = pTablaSimbolos;
+	}
+
+	public TablaDeSimbolos getTablaSimbolos(){
+   		return this.tablaSimbolos;
+	}
+
 
 
 
