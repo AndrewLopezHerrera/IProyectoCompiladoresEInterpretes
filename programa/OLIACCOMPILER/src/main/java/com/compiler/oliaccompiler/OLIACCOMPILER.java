@@ -43,8 +43,7 @@ public class OLIACCOMPILER implements Runnable {
             }
 
             // Mostrar la tabla de símbolos generada
-            //System.out.println("\n--- Tabla de Símbolos ---");
-            //tablaSimbolos.mostrar();
+            tablaSimbolos.imprimir();
 
         } catch (Exception e) {
             System.err.println("Error durante el parseo: " + e.getMessage());
