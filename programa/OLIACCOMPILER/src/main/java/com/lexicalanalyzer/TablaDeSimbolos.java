@@ -7,17 +7,21 @@ public class TablaDeSimbolos {
     private static class Entrada {
         String lexema;
         String tipoToken;
+        String tipoDeclarado; // ← nuevo campo
 
-        Entrada(String lexema, String tipoToken) {
+        Entrada(String lexema, String tipoToken, String tipoDeclarado) {
             this.lexema = lexema;
             this.tipoToken = tipoToken;
+            this.tipoDeclarado = tipoDeclarado;
         }
 
         @Override
         public String toString() {
-            return String.format("%-15s | %-15s", lexema, tipoToken);
+            return String.format("%-15s | %-15s | %-15s", lexema, tipoToken, tipoDeclarado);
         }
     }
+
+
 
     private static class Ambito {
         Map<String, Entrada> tabla = new LinkedHashMap<>();
@@ -52,17 +56,29 @@ public class TablaDeSimbolos {
     }
 
     public void agregar(int token, String lexema) {
+        agregar(token, lexema, null); // delegar con tipoDato nulo
+    }
+
+    public void agregar(int token, String lexema, String tipoDato) {
         String nombreToken = obtenerNombreToken(token);
         if (!actual.tabla.containsKey(lexema)) {
-            actual.tabla.put(lexema, new Entrada(lexema, nombreToken));
+            actual.tabla.put(lexema, new Entrada(lexema, nombreToken, tipoDato));
         }
     }
 
-    public void insertar(String nombre, String tipo) {
-        if (!actual.tabla.containsKey(nombre)) {
-            actual.tabla.put(nombre, new Entrada(nombre, tipo));
+
+    public void insertar(String lexema, int token) {
+        insertar(lexema, token, "-");
+    }
+
+    public void insertar(String lexema, int token, String tipoDeclarado) {
+        String tipoToken = obtenerNombreToken(token);
+        if (!actual.tabla.containsKey(lexema)) {
+            actual.tabla.put(lexema, new Entrada(lexema, tipoToken, tipoDeclarado));
         }
     }
+
+
 
 
     private String obtenerNombreToken(int token) {
@@ -77,6 +93,7 @@ public class TablaDeSimbolos {
         }
         return "TOKEN_" + token;
     }
+
 
     public void imprimir() {
         System.out.println("\n--- Tabla de Símbolos ---");
