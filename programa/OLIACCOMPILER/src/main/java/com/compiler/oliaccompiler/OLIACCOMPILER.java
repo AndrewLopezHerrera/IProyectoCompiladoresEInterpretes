@@ -24,17 +24,16 @@ public class OLIACCOMPILER implements Runnable {
 
             // Crear el lexer con el archivo
             MiLexer lexer = new MiLexer(new FileReader(file));
-
-            // Asignarle la tabla de símbolos al lexer
-            lexer.setTablaSimbolos(tablaSimbolos);
+            lexer.setTablaSimbolos(tablaSimbolos); // Enlazar tabla al lexer
 
             // Crear el parser
             parser p = new parser(lexer);
+            p.setTablaSimbolos(tablaSimbolos); // Enlazar tabla al parser
 
             // Parsear
             p.parse();
 
-            // Mostrar resultado del parseo
+            // Resultado del análisis
             if (p.error_count == 0) {
                 System.out.println("\n--- Parseo exitoso, sin errores sintácticos ---");
             } else {
@@ -42,7 +41,7 @@ public class OLIACCOMPILER implements Runnable {
                 System.out.println("Cantidad de errores sintácticos detectados: " + p.error_count);
             }
 
-            // Mostrar la tabla de símbolos generada
+            // Imprimir la tabla de símbolos
             tablaSimbolos.imprimir();
 
         } catch (Exception e) {
@@ -51,16 +50,9 @@ public class OLIACCOMPILER implements Runnable {
     }
 
     public static void main(String[] args) {
-        // Crear el objeto de la clase principal
         OLIACCOMPILER app = new OLIACCOMPILER();
-        
-        // Crear el objeto de CommandLine
         CommandLine cmd = new CommandLine(app);
-        
-        // Parsear los argumentos y ejecutar
         int exitCode = cmd.execute(args);
-        
-        // Salir con el código de estado adecuado
         System.exit(exitCode);
     }
 }

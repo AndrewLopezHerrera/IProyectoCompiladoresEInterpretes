@@ -19,29 +19,12 @@ parser code {:
         System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
     }
 
-    public class TablaDeSimbolos {
-    private List<EntradaTabla> tabla = new ArrayList<>();
+    public TablaDeSimbolos tablaSimbolos;
 
-    public void agregar(int token, String lexema) {
-        tabla.add(new EntradaTabla(token, lexema));
+    public void setTablaSimbolos(TablaDeSimbolos tabla) {
+        this.tablaSimbolos = tabla;
     }
 
-    public void mostrar() {
-        for (EntradaTabla entrada : tabla) {
-            System.out.println("Token: " + entrada.token + ", Valor: " + entrada.lexema);
-            }
-        }
-    }
-
-    class EntradaTabla {
-        int token;
-        String lexema;
-
-        public EntradaTabla(int token, String lexema) {
-            this.token = token;
-            this.lexema = lexema;
-        }
-    }
     public void recover() {
         try {
             Symbol next;
@@ -131,8 +114,24 @@ stmt ::=
     | comment
     | error END_LINE;
 
-var_decl ::=
-    type ID;
+/*
+var_decl ::= type:t ID:id 
+  {: 
+     String tipoDato = (String) t; 
+     String nombre = (String) ((Symbol) id).value;
+     int token = ((Symbol) id).sym;
+     tablaSimbolos.agregar(token, nombre, tipoDato);
+  :};
+  */
+
+var_decl ::= type:t ID:id 
+  {: 
+     String tipoDato = (String)((Symbol)t).value;
+     String nombre = (String)((Symbol)id).value;
+     int token = ((Symbol)id).sym;
+     tablaSimbolos.agregar(token, nombre, tipoDato);
+  :};
+
 
 array_decl ::= 
     type ID LBRACKET expr RBRACKET
@@ -235,24 +234,76 @@ return_stmt ::= RETURN expr;
 
 break_stmt ::= BREAK;
 
-type ::= 
-    simple_type
-    | matrix_type
-    | VOID;
+simple_type ::= INT:i
+  {:
+    String tipo = ((Symbol)i).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("simple_type", sym.INT, ((Symbol)i), ((Symbol)i), tipo);
+  :}
+  | FLOAT:f
+  {:
+    String tipo = ((Symbol)f).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("simple_type", sym.FLOAT, ((Symbol)f), ((Symbol)f), tipo);
+  :}
+  | BOOLEAN:b
+  {:
+    String tipo = ((Symbol)b).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("simple_type", sym.BOOLEAN, ((Symbol)b), ((Symbol)b), tipo);
+  :}
+  | CHAR:c
+  {:
+    String tipo = ((Symbol)c).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("simple_type", sym.CHAR, ((Symbol)c), ((Symbol)c), tipo);
+  :}
+  | STRING:s
+  {:
+    String tipo = ((Symbol)s).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("simple_type", sym.STRING, ((Symbol)s), ((Symbol)s), tipo);
+  :};
 
-simple_type ::=
-    INT
-    | FLOAT
-    | BOOLEAN
-    | CHAR
-    | STRING;
 
-matrix_type ::=
-    INT_MATRIX
-    | FLOAT_MATRIX
-    | STRING_MATRIX
-    | CHAR_MATRIX
-    | BOOLEAN_MATRIX;
+matrix_type ::= INT_MATRIX:i
+  {:
+    String tipo = ((Symbol)i).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("matrix_type", sym.INT_MATRIX, ((Symbol)i), ((Symbol)i), tipo);
+  :}
+  | FLOAT_MATRIX:f
+  {:
+    String tipo = ((Symbol)f).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("matrix_type", sym.FLOAT_MATRIX, ((Symbol)f), ((Symbol)f), tipo);
+  :}
+  | STRING_MATRIX:s
+  {:
+    String tipo = ((Symbol)s).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("matrix_type", sym.STRING_MATRIX, ((Symbol)s), ((Symbol)s), tipo);
+  :}
+  | CHAR_MATRIX:c
+  {:
+    String tipo = ((Symbol)c).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("matrix_type", sym.CHAR_MATRIX, ((Symbol)c), ((Symbol)c), tipo);
+  :}
+  | BOOLEAN_MATRIX:b
+  {:
+    String tipo = ((Symbol)b).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("matrix_type", sym.BOOLEAN_MATRIX, ((Symbol)b), ((Symbol)b), tipo);
+  :};
+
+type ::= simple_type:s
+  {:
+    String tipo = (String)((Symbol)s).value;
+    RESULT = parser.getSymbolFactory().newSymbol("type", sym.ID, ((Symbol)s), ((Symbol)s), tipo);
+  :}
+  | matrix_type:m
+  {:
+    String tipo = (String)((Symbol)m).value;
+    RESULT = parser.getSymbolFactory().newSymbol("type", sym.ID, ((Symbol)m), ((Symbol)m), tipo);
+  :}
+  | VOID:v
+  {:
+    String tipo = ((Symbol)v).value.toString();
+    RESULT = parser.getSymbolFactory().newSymbol("type", sym.VOID, ((Symbol)v), ((Symbol)v), tipo);
+  :};
+
+
 
 comment ::= 
     COMMENT_BLOCK

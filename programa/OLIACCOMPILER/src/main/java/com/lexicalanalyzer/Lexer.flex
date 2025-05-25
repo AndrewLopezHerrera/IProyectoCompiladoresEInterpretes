@@ -19,20 +19,15 @@ import com.lexicalanalyzer.sym.*;
 	private TablaDeSimbolos tablaSimbolos;
 
 	private Symbol symbol(int type, Object value) {
-    	// Solo guardamos identificadores y literales
-    		if (type == sym.ID || type == sym.INT_LITERAL || type == sym.FLOAT_LITERAL ||
-        		type == sym.STRING_LITERAL || type == sym.CHAR_LITERAL || type == sym.BOOLEAN_LITERAL) {
-      		tablaSimbolos.agregar(type, value.toString());
-    	}
-    		return new Symbol(type, yyline, yycolumn, value);
-  	}
-
-	public void setTablaSimbolos(TablaDeSimbolos pTablaSimbolos){
-    		this.tablaSimbolos = pTablaSimbolos;
+		if (type == sym.ID || type == sym.INT_LITERAL || type == sym.FLOAT_LITERAL ||
+			type == sym.STRING_LITERAL || type == sym.CHAR_LITERAL || type == sym.BOOLEAN_LITERAL) {
+		tablaSimbolos.agregar(type, value.toString());
+		}
+		return new Symbol(type, yyline, yycolumn, value);
 	}
 
-	public TablaDeSimbolos getTablaSimbolos(){
-   		return this.tablaSimbolos;
+	public void setTablaSimbolos(TablaDeSimbolos tabla) {
+		this.tablaSimbolos = tabla;
 	}
 
 
@@ -141,17 +136,17 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 {break}                     { return symbol(sym.BREAK, yytext()); }
 {return}                    { return symbol(sym.RETURN, yytext()); }
 
-{int}                       { return symbol(sym.INT, yytext()); }
-{float}                     { return symbol(sym.FLOAT, yytext()); }
-{boolean}                   { return symbol(sym.BOOLEAN, yytext()); }
-{char}                      { return symbol(sym.CHAR, yytext()); }
-{string}                    { return symbol(sym.STRING, yytext()); }
+{int}           { return symbol(sym.INT, "int"); }
+{float}         { return symbol(sym.FLOAT, "float"); }
+{boolean}       { return symbol(sym.BOOLEAN, "boolean"); }
+{char}          { return symbol(sym.CHAR, "char"); }
+{string}        { return symbol(sym.STRING, "string"); }
 
-{int_matrix}                { return symbol(sym.INT_MATRIX, yytext()); }
-{float_matrix}              { return symbol(sym.FLOAT_MATRIX, yytext()); }
-{string_matrix}             { return symbol(sym.STRING_MATRIX, yytext()); }
-{char_matrix}               { return symbol(sym.CHAR_MATRIX, yytext()); }
-{boolean_matrix}            { return symbol(sym.BOOLEAN_MATRIX, yytext()); }
+{int_matrix}     { return symbol(sym.INT_MATRIX, "int[][]"); }
+{float_matrix}   { return symbol(sym.FLOAT_MATRIX, "float[][]"); }
+{string_matrix}  { return symbol(sym.STRING_MATRIX, "string[][]"); }
+{char_matrix}    { return symbol(sym.CHAR_MATRIX, "char[][]"); }
+{boolean_matrix} { return symbol(sym.BOOLEAN_MATRIX, "boolean[][]"); }
 
 {adition_one}               { return symbol(sym.ADDITION_ONE, yytext()); }
 {substract_one}             { return symbol(sym.SUBTRACT_ONE, yytext()); }
