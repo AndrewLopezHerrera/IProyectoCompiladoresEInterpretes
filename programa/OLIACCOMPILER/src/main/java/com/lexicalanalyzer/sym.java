@@ -19,7 +19,7 @@ public class sym {
   public static final int SUBTRACT_ONE = 25;
   public static final int SUBTRACT = 28;
   public static final int INT = 14;
-  public static final int COMMENT_BLOCK = 59;
+  public static final int COMMENT_BLOCK = 58;
   public static final int CONJUNCTION = 32;
   public static final int FOR = 11;
   public static final int END_LINE = 47;
@@ -29,10 +29,10 @@ public class sym {
   public static final int COMMA = 44;
   public static final int INT_MATRIX = 19;
   public static final int OPEN_BLOCK = 48;
-  public static final int MAIN = 61;
+  public static final int MAIN = 60;
   public static final int ASSIGN = 50;
   public static final int IF = 7;
-  public static final int ID = 62;
+  public static final int ID = 61;
   public static final int LE = 37;
   public static final int EOF = 0;
   public static final int BOOLEAN = 16;
@@ -45,7 +45,7 @@ public class sym {
   public static final int PARENTHESIS_R = 46;
   public static final int STRING_MATRIX = 21;
   public static final int BREAK = 13;
-  public static final int VOID = 58;
+  public static final int VOID = 62;
   public static final int EQ = 35;
   public static final int PARENTHESIS_L = 45;
   public static final int MODULE = 31;
@@ -63,7 +63,7 @@ public class sym {
   public static final int FLOAT = 15;
   public static final int BOOLEAN_MATRIX = 23;
   public static final int STRING = 18;
-  public static final int COMMENT_LINE = 60;
+  public static final int COMMENT_LINE = 59;
   public static final int FLOAT_LITERAL = 3;
   public static final int DIVISION = 30;
   public static final int GT = 40;
@@ -130,11 +130,11 @@ public class sym {
   "WRITE_STRING",
   "WRITE_BOOLEAN",
   "RETURN",
-  "VOID",
   "COMMENT_BLOCK",
   "COMMENT_LINE",
   "MAIN",
-  "ID"
+  "ID",
+  "VOID"
   };
 }
 

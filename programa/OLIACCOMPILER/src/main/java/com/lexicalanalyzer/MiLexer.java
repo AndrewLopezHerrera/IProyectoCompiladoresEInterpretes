@@ -454,22 +454,12 @@ public class MiLexer implements java_cup.runtime.Scanner {
 	private TablaDeSimbolos tablaSimbolos;
 
 	private Symbol symbol(int type, Object value) {
-    	// Solo guardamos identificadores y literales
-    		if (type == sym.ID || type == sym.INT_LITERAL || type == sym.FLOAT_LITERAL ||
-        		type == sym.STRING_LITERAL || type == sym.CHAR_LITERAL || type == sym.BOOLEAN_LITERAL) {
-      		tablaSimbolos.agregar(type, value.toString());
-    	}
     		return new Symbol(type, yyline, yycolumn, value);
   	}
 
-	public void setTablaSimbolos(TablaDeSimbolos pTablaSimbolos){
-    		this.tablaSimbolos = pTablaSimbolos;
-	}
-
-	public TablaDeSimbolos getTablaSimbolos(){
-   		return this.tablaSimbolos;
-	}
-
+	private Symbol symbol(int type, int line, int column, Object value) {
+            return new Symbol(type, line, column, value);
+        }
 
 
 
@@ -1082,7 +1072,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 98: break;
           case 38:
-            { return symbol(sym.INT, yytext());
+            { return symbol(sym.INT, yyline, yycolumn, "int");
             }
           // fall through
           case 99: break;
@@ -1092,7 +1082,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 100: break;
           case 40:
-            { return symbol(sym.CHAR, yytext());
+            { return symbol(sym.CHAR, yyline, yycolumn, "char");
             }
           // fall through
           case 101: break;
@@ -1112,7 +1102,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 104: break;
           case 44:
-            { return symbol(sym.VOID, yytext());
+            { return symbol(sym.VOID, yyline, yycolumn, "void");
             }
           // fall through
           case 105: break;
@@ -1122,7 +1112,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 106: break;
           case 46:
-            { return symbol(sym.FLOAT, yytext());
+            { return symbol(sym.FLOAT, yyline, yycolumn, "float");
             }
           // fall through
           case 107: break;
@@ -1137,27 +1127,27 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 109: break;
           case 49:
-            { return symbol(sym.STRING, yytext());
+            { return symbol(sym.STRING, yyline, yycolumn, "string");
             }
           // fall through
           case 110: break;
           case 50:
-            { return symbol(sym.BOOLEAN, yytext());
+            { return symbol(sym.BOOLEAN, yyline, yycolumn, "boolean");
             }
           // fall through
           case 111: break;
           case 51:
-            { return symbol(sym.INT_MATRIX, yytext());
+            { return symbol(sym.INT_MATRIX, yyline, yycolumn, "int[][]");
             }
           // fall through
           case 112: break;
           case 52:
-            { return symbol(sym.CHAR_MATRIX, yytext());
+            { return symbol(sym.CHAR_MATRIX, yyline, yycolumn, "char[][]");
             }
           // fall through
           case 113: break;
           case 53:
-            { return symbol(sym.FLOAT_MATRIX, yytext());
+            { return symbol(sym.FLOAT_MATRIX, yyline, yycolumn, "float[][]");
             }
           // fall through
           case 114: break;
@@ -1167,7 +1157,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 115: break;
           case 55:
-            { return symbol(sym.STRING_MATRIX, yytext());
+            { return symbol(sym.STRING_MATRIX, yyline, yycolumn, "string[][]");
             }
           // fall through
           case 116: break;
@@ -1177,7 +1167,7 @@ public class MiLexer implements java_cup.runtime.Scanner {
           // fall through
           case 117: break;
           case 57:
-            { return symbol(sym.BOOLEAN_MATRIX, yytext());
+            { return symbol(sym.BOOLEAN_MATRIX, yyline, yycolumn, "boolean[][]");
             }
           // fall through
           case 118: break;

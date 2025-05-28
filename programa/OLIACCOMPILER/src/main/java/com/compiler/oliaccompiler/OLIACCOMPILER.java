@@ -1,8 +1,7 @@
 package com.compiler.oliaccompiler;
 
 import com.lexicalanalyzer.MiLexer;
-import com.lexicalanalyzer.parser;
-import com.lexicalanalyzer.TablaDeSimbolos; // ✨ Agregamos import
+import com.lexicalanalyzer.parser;// ✨ Agregamos import
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -20,13 +19,9 @@ public class OLIACCOMPILER implements Runnable {
     public void run() {
         try {
             // Crear la tabla de símbolos
-            TablaDeSimbolos tablaSimbolos = new TablaDeSimbolos();
 
             // Crear el lexer con el archivo
             MiLexer lexer = new MiLexer(new FileReader(file));
-
-            // Asignarle la tabla de símbolos al lexer
-            lexer.setTablaSimbolos(tablaSimbolos);
 
             // Crear el parser
             parser p = new parser(lexer);
@@ -42,8 +37,7 @@ public class OLIACCOMPILER implements Runnable {
                 System.out.println("Cantidad de errores sintácticos detectados: " + p.error_count);
             }
 
-            // Mostrar la tabla de símbolos generada
-            tablaSimbolos.imprimir();
+            p.printTables();
 
         } catch (Exception e) {
             System.err.println("Error durante el parseo: " + e.getMessage());

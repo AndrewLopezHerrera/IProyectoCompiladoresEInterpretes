@@ -2,58 +2,60 @@ package com.lexicalanalyzer;
 import java_cup.runtime.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collection;
 
 parser code {:
     public int error_count = 0;
+    private Map<String, LineaTabla> Functions = new HashMap<>() ;
+    private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>() ;
+    private TablaDeSimbolos ActualTable = null;
 
     // Modificar para que reporte todos los errores
     public void syntax_error(Symbol s) {
         if (s != null) {
-            System.out.println("Error sintáctico en la línea " + (s.left + 1) + ", columna " + (s.right + 1) + ": " + s.value);
+            System.out.println("Error sintáctico en la línea " +(s.left + 1) +
+            ", columna " + (s.right + 1) + ": " + s.value);
         }
         error_count++;
-        recover();
     }
 
     public void report_fatal_error(String message, Object info) {
         System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
     }
 
-    public class TablaDeSimbolos {
-    private List<EntradaTabla> tabla = new ArrayList<>();
-
-    public void agregar(int token, String lexema) {
-        tabla.add(new EntradaTabla(token, lexema));
-    }
-
-    public void mostrar() {
-        for (EntradaTabla entrada : tabla) {
-            System.out.println("Token: " + entrada.token + ", Valor: " + entrada.lexema);
-            }
+    public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
+        if(Functions.containsKey(pName)){
+            ActualTable = null;
+        }
+        else{
+            LineaTabla function = new LineaTabla(pTypeReturn, pName, pRow, pColumn, true);
+            Functions.put(pName, function);
+            TablaDeSimbolos table = new TablaDeSimbolos(null);
+            FunctionTables.put(pName, table);
+            ActualTable = table;
         }
     }
 
-    class EntradaTabla {
-        int token;
-        String lexema;
+    public LineaTabla createVar(String pTypeReturn, String pName, int pRow,
+        int pColumn, boolean pInitialized){
+        LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow,pColumn, pInitialized);
+        if(!ActualTable.AgregarDato(line)){
+            System.err.println("Error sintáctico en la línea: Ya existe " + pName
+                +". Por lo tanto debe cambiar el nombre de " + pName +
+                " en la línea " + pRow + " y columna " + pColumn);
+            return null;
+        }
+        return line;
+    }
 
-        public EntradaTabla(int token, String lexema) {
-            this.token = token;
-            this.lexema = lexema;
+    public void printTables(){
+        Collection<TablaDeSimbolos> tables = FunctionTables.values();
+        for (TablaDeSimbolos table : tables){
+            System.out.println(table.toString());
         }
     }
-    public void recover() {
-        try {
-            Symbol next;
-            do {
-                next = getScanner().next_token();
-                if (next == null) break;
-            } while (next.sym != sym.END_LINE && next.sym != sym.CLOSE_BLOCK);
-        } catch (Exception e) {
-    }
-
-}
-
 :}
 
 
@@ -68,8 +70,8 @@ terminal BRACKET, LBRACKET, RBRACKET, COMMA;
 terminal PARENTHESIS_L, PARENTHESIS_R, END_LINE, OPEN_BLOCK, CLOSE_BLOCK;
 terminal ASSIGN;
 terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLEAN;
-terminal RETURN, VOID, COMMENT_BLOCK, COMMENT_LINE, MAIN;
-terminal ID;
+terminal RETURN, COMMENT_BLOCK, COMMENT_LINE, MAIN;
+terminal ID, VOID;
 
 // No terminales
 non terminal programa, main_func, func_decl, func_list, param_list, param, block;
@@ -91,24 +93,48 @@ precedence left CONJUNCTION, DISJUNCTION;
 start with programa;
 
 programa ::=
-    main_func func_list | main_func;
+    func_list;
 
-main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R block;
+main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R
+{:
+    int row = 0;
+    int column = 0;
+    createFunction("void", "main", row, column);
+    RESULT = null;
+:}
+    block;
 
-func_decl ::= type ID PARENTHESIS_L param_list PARENTHESIS_R block;
+func_decl ::= type:typeFunction ID:name
+{:
+    String nameFunction = name.toString();
+    String type = typeFunction.toString();
+    int row = 0;
+    int column = 0;
+    createFunction(type, nameFunction, row, column);
+    RESULT = null;
+:}
+    PARENTHESIS_L param_list PARENTHESIS_R block;
 
 func_list ::=
     func_decl func_list
     | comment func_list
-    | func_decl
-    | error comment;
+    | main_func
+    | error ;
 
 param_list ::=
     param COMMA param_list
-    | param;
+    | param
+    | ;
 
-param ::= type ID
-    | /* vacío */;
+param ::= type:typeVar ID:name
+{:
+    String nameVar = name.toString();
+    String type = typeVar.toString();
+    int row = 0;
+    int column = 0;
+    createVar(type, nameVar, row, column, true);
+    RESULT = null;
+:};
 
 block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK;
 
@@ -132,7 +158,16 @@ stmt ::=
     | error END_LINE;
 
 var_decl ::=
-    type ID;
+    type:typeVar ID:name
+{:
+    if(ActualTable != null){
+        String nameFunction = typeVar.toString();
+        String type = name.toString();
+        int row = 0;
+        int column = 0;
+        RESULT = createVar(nameFunction, type, row, column, false);
+    }
+:};
 
 array_decl ::= 
     type ID LBRACKET expr RBRACKET
@@ -147,8 +182,26 @@ assign_stmt ::=
     | SUBTRACT_ONE ID;
 
 var_decl_asisgn_stmt ::=
-    var_decl ASSIGN expr
-    | array_decl ASSIGN expr;
+    var_decl:var
+{:
+    if(ActualTable != null ){
+        LineaTabla varLine = (LineaTabla) var;
+        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
+            System.out.println(varLine.getNombre() + " no existe en la linea " +
+                varLine.getFila() + " y columna " + varLine.getColumna());
+    }
+    RESULT = null;
+:} ASSIGN expr
+    | array_decl:array ASSIGN expr
+{:
+    if(ActualTable != null){
+        LineaTabla varLine = (LineaTabla) array;
+        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
+            System.out.println(varLine.getNombre() + " no existe en la linea " +
+                varLine.getFila() + " y columna " + varLine.getColumna());
+    }
+    RESULT = null;
+:};
 
 expr ::=
     func_call
@@ -236,23 +289,22 @@ return_stmt ::= RETURN expr;
 break_stmt ::= BREAK;
 
 type ::= 
-    simple_type
-    | matrix_type
-    | VOID;
+    simple_type:typeString {: RESULT = typeString.toString(); :}
+    | matrix_type:typeString {: RESULT = typeString.toString(); :};
 
 simple_type ::=
-    INT
-    | FLOAT
-    | BOOLEAN
-    | CHAR
-    | STRING;
+    INT {:RESULT = "int";:}
+    | FLOAT {:RESULT = "float";:}
+    | BOOLEAN {:RESULT = "boolean";:}
+    | CHAR {:RESULT = "char";:}
+    | STRING {:RESULT = "string";:};
 
 matrix_type ::=
-    INT_MATRIX
-    | FLOAT_MATRIX
-    | STRING_MATRIX
-    | CHAR_MATRIX
-    | BOOLEAN_MATRIX;
+    INT_MATRIX {:RESULT = "intMatrix";:}
+    | FLOAT_MATRIX {:RESULT = "floatMatrix";:}
+    | STRING_MATRIX {:RESULT = "stringMatrix";:}
+    | CHAR_MATRIX {:RESULT = "charMatrix";:}
+    | BOOLEAN_MATRIX {:RESULT = "booleanMatrix";:};
 
 comment ::= 
     COMMENT_BLOCK
