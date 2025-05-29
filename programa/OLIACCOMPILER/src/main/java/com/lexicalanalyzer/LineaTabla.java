@@ -25,7 +25,7 @@ public class LineaTabla {
         String mensaje = "";
         mensaje += "ID: " + ID + " | Nombre: " + Nombre + " | Tipo: " + Tipo;
         mensaje += " | Fila: " + Fila + " | Columna: " + Columna;
-        mensaje += " | ¿Está inicializado?: " + EstaInicializado + "\n";
+        mensaje += " | ¿Está inicializado?: " + EstaInicializado;
         return mensaje;
     }
   

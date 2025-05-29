@@ -9,7 +9,7 @@ import java.util.Collection;
 parser code {:
     public int error_count = 0;
     public int error_semantic_count = 0;
-    private Map<String, LineaTabla> Functions = new HashMap<>() ;
+    private Map<String, Function> Functions = new HashMap<>() ;
     private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>() ;
     private TablaDeSimbolos ActualTable = null;
 
@@ -29,10 +29,12 @@ parser code {:
     public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
         if(Functions.containsKey(pName)){
             ActualTable = null;
+            System.err.println("Error semántico: La función " + pName + 
+                " está duplicada");
             error_semantic_count++;
         }
         else{
-            LineaTabla function = new LineaTabla(pTypeReturn, pName, pRow, pColumn, true);
+            Function function = new Function(pTypeReturn, pName, pRow, pColumn, true);
             Functions.put(pName, function);
             TablaDeSimbolos table = new TablaDeSimbolos(null);
             FunctionTables.put(pName, table);
@@ -44,16 +46,15 @@ parser code {:
         int pColumn, boolean pInitialized){
         LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow,pColumn, pInitialized);
         if(!ActualTable.AgregarDato(line)){
-            System.err.println("Error sintáctico en la línea: Ya existe " + pName
-                +". Por lo tanto debe cambiar el nombre de " + pName +
-                " en la línea " + pRow + " y columna " + pColumn);
-            error_semantic_count++;
+            System.err.println("Error semántico: La función " + pName + 
+                " está duplicada");
             return null;
         }
         return line;
     }
 
     public void printTables(){
+        System.out.println(Functions.toString() + "\n");
         Collection<TablaDeSimbolos> tables = FunctionTables.values();
         for (TablaDeSimbolos table : tables){
             System.out.println(table.toString());
@@ -109,14 +110,25 @@ main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R
 
 func_decl ::= type:typeFunction ID:name
 {:
-    String nameFunction = name.toString();
-    String type = typeFunction.toString();
-    int row = 0;
-    int column = 0;
-    createFunction(type, nameFunction, row, column);
-    RESULT = null;
+    if(typeFunction != null && name != null){
+        String nameFunction = name.toString();
+        String type = typeFunction.toString();
+        int row = 0;
+        int column = 0;
+        createFunction(type, nameFunction, row, column);
+        RESULT = null;
+    }
 :}
-    PARENTHESIS_L param_list PARENTHESIS_R block;
+    PARENTHESIS_L param_list:params PARENTHESIS_R
+{:
+    if(params != null){
+        String paramsFunction = params.toString();
+        String nameFunction = name.toString();
+        Function function = Functions.get(nameFunction);
+        function.setArguments(paramsFunction);
+    }
+:}
+    block;
 
 func_list ::=
     func_decl func_list
@@ -125,34 +137,47 @@ func_list ::=
     | error ;
 
 param_list ::=
-    param COMMA param_list
-    | param
-    | ;
+    param:type COMMA param_list:typeList
+{:
+    if(type != null && typeList != null){
+        String types = typeList.toString();
+        String typeVar = type.toString();
+        RESULT = typeVar + " " + types;
+    }
+:}
+    | param:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | {:RESULT = null;:};
 
 param ::= type:typeVar ID:name
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && typeVar != null && name != null){
         String nameVar = name.toString();
         String type = typeVar.toString();
         int row = 0;
         int column = 0;
         createVar(type, nameVar, row, column, true);
-        RESULT = null;
+        RESULT = type;
     }
 :};
 
 block ::=
     OPEN_BLOCK
 {:
-    TablaDeSimbolos table = new TablaDeSimbolos(ActualTable);
-    ActualTable.AgregarHijo(table);
-    ActualTable = table;
-    
+    if(ActualTable != null){
+        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable);
+        ActualTable.AgregarHijo(table);
+        ActualTable = table;
+    }
 :}
     stmt_list
     CLOSE_BLOCK
 {:
-    ActualTable = ActualTable.getPadre();
+    if(ActualTable != null)
+        ActualTable = ActualTable.getPadre();
 :};
 
 stmt_list ::=
@@ -177,7 +202,7 @@ stmt ::=
 var_decl ::=
     type:typeVar ID:name
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && typeVar != null && name != null){
         String nameFunction = typeVar.toString();
         String type = name.toString();
         int row = 0;
@@ -194,7 +219,7 @@ array_decl ::=
 assign_stmt ::=
     ID:name ASSIGN expr
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -207,7 +232,7 @@ assign_stmt ::=
     | ID LBRACKET expr RBRACKET ASSIGN expr
     | ADDITION_ONE ID:name
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -225,7 +250,7 @@ assign_stmt ::=
 :}
     | SUBTRACT_ONE ID:name 
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -245,7 +270,7 @@ assign_stmt ::=
 var_decl_asisgn_stmt ::=
     var_decl:var
 {:
-    if(ActualTable != null ){
+    if(ActualTable != null && var != null){
         LineaTabla varLine = (LineaTabla) var;
         if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
             System.out.println(varLine.getNombre() + " no existe en la linea " +
@@ -255,7 +280,7 @@ var_decl_asisgn_stmt ::=
 :} ASSIGN expr
     | array_decl:array ASSIGN expr
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && array != null){
         LineaTabla varLine = (LineaTabla) array;
         if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
             System.out.println(varLine.getNombre() + " no existe en la linea " +
@@ -273,23 +298,24 @@ expr ::=
     | array_int_expr
     | literal:type
 {:
-    RESULT = type.toString();
+    if(type != null)
+        RESULT = type.toString();
 :}
     | ID:idDeclarated
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && idDeclarated != null){
         String id = idDeclarated.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
             error_semantic_count++;
             System.err.println("El identificador " + id + " no existe");
         }
-        RESULT = line;
+        RESULT = line.getTipo();
     }
 :}
     | ADDITION_ONE ID:name
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -302,12 +328,15 @@ expr ::=
                     line.getTipo() + " en el identificador " + line.getNombre());
                 error_semantic_count++;
             }
+            else{
+                RESULT = line.getTipo();
+            }
         }
     }
 :}
     | SUBTRACT_ONE ID:name
 {:
-    if(ActualTable != null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -319,6 +348,9 @@ expr ::=
                 System.err.println("No se permite el uso del -- con el tipo " +
                     line.getTipo() + " en el identificador " + line.getNombre());
                 error_semantic_count++;
+            }
+            else{
+                RESULT = line.getTipo();
             }
         }
     }
@@ -333,7 +365,7 @@ array_int_expr_list ::=
     | INT_LITERAL;
 
 arith_expr ::=
-    expr ADDITION expr
+    expr ADDITION expr {::}
     | expr SUBTRACT expr
     | expr DIVISION expr
     | expr MULTIPLICATION expr
@@ -420,11 +452,67 @@ comment ::=
     | COMMENT_LINE;
 
 func_call ::=
-    ID PARENTHESIS_L arg_list PARENTHESIS_R
-    | ID PARENTHESIS_L PARENTHESIS_R;
+    ID:name PARENTHESIS_L arg_list:args PARENTHESIS_R
+{:
+    if(ActualTable != null && args != null && name != null){
+        String nameCall = name.toString();
+        String argsCall = args.toString();
+        if(Functions.containsKey(nameCall)){
+            Function function = Functions.get(nameCall);
+            String argsFunction = function.getArguments();
+            if(argsFunction.equals(argsCall)){
+                RESULT = function.getTipo();
+            }
+            else{
+                System.err.println("Error semántico: La función " + nameCall +
+                    " tiene argumentos de tipo |" + argsFunction + "|, en " +
+                    " cambio, se enviaron argumentos de tipo |" + argsCall + 
+                    "|.");
+            }
+        }
+        else{
+            System.err.println("No existe la función " + nameCall + ".");
+        }
+    }
+:}
+    | ID:nameFuncArgsEmpty PARENTHESIS_L PARENTHESIS_R
+{:
+    if(ActualTable != null && nameFuncArgsEmpty != null){
+        String nameCall = nameFuncArgsEmpty.toString();
+        String argsCall = "";
+        if(Functions.containsKey(nameCall)){
+            Function function = Functions.get(nameCall);
+            String argsFunction = function.getArguments();
+            if(argsFunction.equals(argsCall)){
+                RESULT = function.getTipo();
+            }
+            else{
+                System.err.println("Error semántico: La función " + nameCall +
+                    " tiene argumentos de tipo |" + argsFunction + "|, en " +
+                    " cambio, se enviaron argumentos de tipo |" + argsCall + 
+                    "|.");
+            }
+        }
+        else{
+            System.err.println("No existe la función " + nameCall + ".");
+        }
+    }
+:};
 
-arg_list ::= expr COMMA arg_list
-    | expr;
+arg_list ::= expr:type COMMA arg_list:types
+{:
+    if(ActualTable != null && type != null && types != null){
+        String typesAux = types.toString();
+        String typeAux = type.toString();
+        RESULT = typeAux + " " + typesAux;
+    }
+:}
+    | expr:type
+{:
+    if(ActualTable != null && type != null){
+        RESULT = type.toString();
+    }
+:};
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 

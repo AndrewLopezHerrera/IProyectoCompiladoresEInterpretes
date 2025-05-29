@@ -61,7 +61,7 @@ public class TablaDeSimbolos {
         String mensaje = "";
         Collection<LineaTabla> lineas = Variables.values();
         for (LineaTabla linea : lineas)
-            mensaje += linea.toString();
+            mensaje += linea.toString() + "\n";
         for (TablaDeSimbolos hijo : Hijos){
             String mensajeHijo = hijo.toString();
             mensaje += "\t" + mensajeHijo.replace("\n", "\n\t");
