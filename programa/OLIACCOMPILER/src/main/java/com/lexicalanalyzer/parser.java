@@ -1569,7 +1569,20 @@ class CUP$parser$actions {
           case 58: // arith_expr ::= expr ADDITION expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede sumar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1578,6 +1591,19 @@ class CUP$parser$actions {
           case 59: // arith_expr ::= expr SUBTRACT expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede restar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1587,6 +1613,19 @@ class CUP$parser$actions {
           case 60: // arith_expr ::= expr DIVISION expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "float"; // Siempre convertir división a float
+    } else {
+        System.err.println("Error semántico: no se puede dividir " + e1 + " entre " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1596,6 +1635,19 @@ class CUP$parser$actions {
           case 61: // arith_expr ::= expr MULTIPLICATION expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede multiplicar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1605,6 +1657,19 @@ class CUP$parser$actions {
           case 62: // arith_expr ::= expr POWERS expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "float";
+    } else {
+        System.err.println("Error semántico: no se puede elevar " + e1 + " a " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1614,6 +1679,19 @@ class CUP$parser$actions {
           case 63: // arith_expr ::= expr MODULE expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e1.equals("int") && e2.equals("int")) {
+        RESULT = "int";
+    } else {
+        System.err.println("Error semántico: módulo solo aplica a enteros, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1623,6 +1701,16 @@ class CUP$parser$actions {
           case 64: // arith_expr ::= SUBTRACT expr 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e.equals("int") || e.equals("float")) {
+        RESULT = e;
+    } else {
+        System.err.println("Error semántico: signo negativo solo aplica a int o float, recibió " + e);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("arith_expr",13, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1632,6 +1720,19 @@ class CUP$parser$actions {
           case 65: // rel_expr ::= expr LT expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '<' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1641,6 +1742,19 @@ class CUP$parser$actions {
           case 66: // rel_expr ::= expr LE expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '<=' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1650,6 +1764,19 @@ class CUP$parser$actions {
           case 67: // rel_expr ::= expr GT expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '>' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1659,6 +1786,19 @@ class CUP$parser$actions {
           case 68: // rel_expr ::= expr GE expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '>=' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1668,6 +1808,19 @@ class CUP$parser$actions {
           case 69: // rel_expr ::= expr EQ expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e1.equals(e2)) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: comparación '==' entre tipos diferentes: " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1677,6 +1830,19 @@ class CUP$parser$actions {
           case 70: // rel_expr ::= expr NEQ expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e1.equals(e2)) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: comparación '!=' entre tipos diferentes: " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("rel_expr",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1686,6 +1852,19 @@ class CUP$parser$actions {
           case 71: // logic_expr ::= expr CONJUNCTION expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e1.equals("boolean") && e2.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '&&' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("logic_expr",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1695,6 +1874,19 @@ class CUP$parser$actions {
           case 72: // logic_expr ::= expr DISJUNCTION expr 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e1.equals("boolean") && e2.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '||' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("logic_expr",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1704,6 +1896,16 @@ class CUP$parser$actions {
           case 73: // logic_expr ::= DENIAL expr 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (e.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: negación (!) solo aplica a booleanos, recibió " + e);
+        RESULT = "error";
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("logic_expr",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

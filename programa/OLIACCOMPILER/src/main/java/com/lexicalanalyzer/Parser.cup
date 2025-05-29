@@ -364,24 +364,155 @@ array_int_expr_list ::=
     INT_LITERAL COMMA array_int_expr_list
     | INT_LITERAL;
 
-arith_expr ::=
-    expr ADDITION expr {::}
-    | expr SUBTRACT expr
-    | expr DIVISION expr
-    | expr MULTIPLICATION expr
-    | expr POWERS expr
-    | expr MODULE expr
-    | SUBTRACT expr;
+arith_expr ::= expr:e1 ADDITION expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede sumar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 SUBTRACT expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede restar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 DIVISION expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "float"; // Siempre convertir división a float
+    } else {
+        System.err.println("Error semántico: no se puede dividir " + e1 + " entre " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 MULTIPLICATION expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    } else {
+        System.err.println("Error semántico: no se puede multiplicar " + e1 + " con " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 POWERS expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "float";
+    } else {
+        System.err.println("Error semántico: no se puede elevar " + e1 + " a " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 MODULE expr:e2
+{:
+    if (e1.equals("int") && e2.equals("int")) {
+        RESULT = "int";
+    } else {
+        System.err.println("Error semántico: módulo solo aplica a enteros, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| SUBTRACT expr:e
+{:
+    if (e.equals("int") || e.equals("float")) {
+        RESULT = e;
+    } else {
+        System.err.println("Error semántico: signo negativo solo aplica a int o float, recibió " + e);
+        RESULT = "error";
+    }
+:};
 
-rel_expr ::=
-    expr LT expr
-    | expr LE expr
-    | expr GT expr
-    | expr GE expr
-    | expr EQ expr
-    | expr NEQ expr;
 
-logic_expr ::= expr CONJUNCTION expr | expr DISJUNCTION expr | DENIAL expr;
+rel_expr ::= expr:e1 LT expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '<' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 LE expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '<=' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 GT expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '>' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 GE expr:e2
+{:
+    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '>=' no válido entre " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 EQ expr:e2
+{:
+    if (e1.equals(e2)) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: comparación '==' entre tipos diferentes: " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 NEQ expr:e2
+{:
+    if (e1.equals(e2)) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: comparación '!=' entre tipos diferentes: " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:};
+
+
+logic_expr ::= expr:e1 CONJUNCTION expr:e2
+{:
+    if (e1.equals("boolean") && e2.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '&&' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| expr:e1 DISJUNCTION expr:e2
+{:
+    if (e1.equals("boolean") && e2.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: '||' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        RESULT = "error";
+    }
+:}
+| DENIAL expr:e
+{:
+    if (e.equals("boolean")) {
+        RESULT = "boolean";
+    } else {
+        System.err.println("Error semántico: negación (!) solo aplica a booleanos, recibió " + e);
+        RESULT = "error";
+    }
+:};
+
 
 for_expr ::=
     logic_expr
