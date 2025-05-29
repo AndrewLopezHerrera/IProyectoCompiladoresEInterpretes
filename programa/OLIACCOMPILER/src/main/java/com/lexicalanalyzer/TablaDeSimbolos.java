@@ -64,7 +64,7 @@ public class TablaDeSimbolos {
             mensaje += linea.toString();
         for (TablaDeSimbolos hijo : Hijos){
             String mensajeHijo = hijo.toString();
-            mensaje += mensajeHijo.replace("\n", "\n\t");
+            mensaje += "\t" + mensajeHijo.replace("\n", "\n\t");
         }
         return mensaje;
     }

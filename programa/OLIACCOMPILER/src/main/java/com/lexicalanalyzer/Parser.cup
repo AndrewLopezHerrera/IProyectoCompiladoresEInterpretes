@@ -8,6 +8,7 @@ import java.util.Collection;
 
 parser code {:
     public int error_count = 0;
+    public int error_semantic_count = 0;
     private Map<String, LineaTabla> Functions = new HashMap<>() ;
     private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>() ;
     private TablaDeSimbolos ActualTable = null;
@@ -28,6 +29,7 @@ parser code {:
     public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
         if(Functions.containsKey(pName)){
             ActualTable = null;
+            error_semantic_count++;
         }
         else{
             LineaTabla function = new LineaTabla(pTypeReturn, pName, pRow, pColumn, true);
@@ -45,6 +47,7 @@ parser code {:
             System.err.println("Error sintáctico en la línea: Ya existe " + pName
                 +". Por lo tanto debe cambiar el nombre de " + pName +
                 " en la línea " + pRow + " y columna " + pColumn);
+            error_semantic_count++;
             return null;
         }
         return line;
@@ -128,15 +131,29 @@ param_list ::=
 
 param ::= type:typeVar ID:name
 {:
-    String nameVar = name.toString();
-    String type = typeVar.toString();
-    int row = 0;
-    int column = 0;
-    createVar(type, nameVar, row, column, true);
-    RESULT = null;
+    if(ActualTable != null){
+        String nameVar = name.toString();
+        String type = typeVar.toString();
+        int row = 0;
+        int column = 0;
+        createVar(type, nameVar, row, column, true);
+        RESULT = null;
+    }
 :};
 
-block ::= OPEN_BLOCK stmt_list CLOSE_BLOCK;
+block ::=
+    OPEN_BLOCK
+{:
+    TablaDeSimbolos table = new TablaDeSimbolos(ActualTable);
+    ActualTable.AgregarHijo(table);
+    ActualTable = table;
+    
+:}
+    stmt_list
+    CLOSE_BLOCK
+{:
+    ActualTable = ActualTable.getPadre();
+:};
 
 stmt_list ::=
     stmt stmt_list
@@ -175,11 +192,55 @@ array_decl ::=
     | matrix_type;
 
 assign_stmt ::=
-    ID ASSIGN expr
+    ID:name ASSIGN expr
+{:
+    if(ActualTable != null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+    }
+:}
     | ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
     | ID LBRACKET expr RBRACKET ASSIGN expr
-    | ADDITION_ONE ID
-    | SUBTRACT_ONE ID;
+    | ADDITION_ONE ID:name
+{:
+    if(ActualTable != null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("No se permite el uso del ++ con el tipo " +
+                    line.getTipo() + " en el identificador " + line.getNombre());
+                error_semantic_count++;
+            }
+        }
+    }
+:}
+    | SUBTRACT_ONE ID:name 
+{:
+    if(ActualTable != null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("No se permite el uso del -- con el tipo " +
+                    line.getTipo() + " en el identificador " + line.getNombre());
+                error_semantic_count++;
+            }
+        }
+    }
+:};
 
 var_decl_asisgn_stmt ::=
     var_decl:var
@@ -210,10 +271,58 @@ expr ::=
     | rel_expr
     | logic_expr
     | array_int_expr
-    | literal
-    | ID
-    | ADDITION_ONE ID
-    | SUBTRACT_ONE ID;
+    | literal:type
+{:
+    RESULT = type.toString();
+:}
+    | ID:idDeclarated
+{:
+    if(ActualTable != null){
+        String id = idDeclarated.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+        RESULT = line;
+    }
+:}
+    | ADDITION_ONE ID:name
+{:
+    if(ActualTable != null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("No se permite el uso del ++ con el tipo " +
+                    line.getTipo() + " en el identificador " + line.getNombre());
+                error_semantic_count++;
+            }
+        }
+    }
+:}
+    | SUBTRACT_ONE ID:name
+{:
+    if(ActualTable != null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            error_semantic_count++;
+            System.err.println("El identificador " + id + " no existe");
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("No se permite el uso del -- con el tipo " +
+                    line.getTipo() + " en el identificador " + line.getNombre());
+                error_semantic_count++;
+            }
+        }
+    }
+:};
 
 array_int_expr ::=
     BRACKET array_int_expr_list BRACKET
@@ -251,11 +360,11 @@ for_assign ::=
     | var_decl_asisgn_stmt;
 
 literal ::=
-    BOOLEAN_LITERAL
-    | STRING_LITERAL
-    | CHAR_LITERAL
-    | FLOAT_LITERAL
-    | INT_LITERAL;
+    BOOLEAN_LITERAL {:RESULT = "boolean";:}
+    | STRING_LITERAL {:RESULT = "string";:}
+    | CHAR_LITERAL {:RESULT = "char";:}
+    | FLOAT_LITERAL {:RESULT = "float";:}
+    | INT_LITERAL {:RESULT = "int";:};
 
 control_struct ::=
     if_elif_else_stmt
