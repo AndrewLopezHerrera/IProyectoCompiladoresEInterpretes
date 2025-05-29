@@ -766,6 +766,17 @@ public class parser extends java_cup.runtime.lr_parser {
         }
     }
 
+    public void semantic_error(Symbol s, String mensaje) {
+        if (s != null) {
+            System.err.println("Error semántico en la línea " + (s.left + 1) +
+                            ", columna " + (s.right + 1) + ": " + mensaje);
+        } else {
+            System.err.println("Error semántico: " + mensaje);
+        }
+        error_semantic_count++;
+    }
+
+
 
 /** Cup generated class to encapsulate user supplied action code.*/
 @SuppressWarnings({"rawtypes", "unchecked", "unused"})
@@ -1579,7 +1590,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
     } else {
-        System.err.println("Error semántico: no se puede sumar " + e1 + " con " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede sumar " + e1 + " con " + e2);
         RESULT = "error";
     }
 
@@ -1601,7 +1613,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
     } else {
-        System.err.println("Error semántico: no se puede restar " + e1 + " con " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede restar " + e1 + " con " + e2);
         RESULT = "error";
     }
 
@@ -1621,9 +1634,10 @@ class CUP$parser$actions {
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = "float"; // Siempre convertir división a float
+        RESULT = "float";
     } else {
-        System.err.println("Error semántico: no se puede dividir " + e1 + " entre " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede dividir " + e1 + " entre " + e2);
         RESULT = "error";
     }
 
@@ -1645,7 +1659,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
     } else {
-        System.err.println("Error semántico: no se puede multiplicar " + e1 + " con " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede multiplicar " + e1 + " con " + e2);
         RESULT = "error";
     }
 
@@ -1667,7 +1682,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = "float";
     } else {
-        System.err.println("Error semántico: no se puede elevar " + e1 + " a " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede elevar " + e1 + " a " + e2);
         RESULT = "error";
     }
 
@@ -1689,7 +1705,8 @@ class CUP$parser$actions {
     if (e1.equals("int") && e2.equals("int")) {
         RESULT = "int";
     } else {
-        System.err.println("Error semántico: módulo solo aplica a enteros, recibió " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "el módulo (%) solo aplica a enteros, recibió " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1708,7 +1725,8 @@ class CUP$parser$actions {
     if (e.equals("int") || e.equals("float")) {
         RESULT = e;
     } else {
-        System.err.println("Error semántico: signo negativo solo aplica a int o float, recibió " + e);
+        Symbol operador = (Symbol) CUP$parser$stack.peek(); // el símbolo actual
+        parser.semantic_error(operador, "el signo negativo solo aplica a int o float, recibió " + e);
         RESULT = "error";
     }
 
@@ -1730,7 +1748,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '<' no válido entre " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'<' no válido entre " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1752,7 +1771,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '<=' no válido entre " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'<=' no válido entre " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1774,7 +1794,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '>' no válido entre " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'>' no válido entre " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1796,7 +1817,8 @@ class CUP$parser$actions {
     if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '>=' no válido entre " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'>=' no válido entre " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1818,7 +1840,8 @@ class CUP$parser$actions {
     if (e1.equals(e2)) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: comparación '==' entre tipos diferentes: " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "comparación '==' entre tipos diferentes: " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1840,7 +1863,8 @@ class CUP$parser$actions {
     if (e1.equals(e2)) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: comparación '!=' entre tipos diferentes: " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "comparación '!=' entre tipos diferentes: " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1862,7 +1886,8 @@ class CUP$parser$actions {
     if (e1.equals("boolean") && e2.equals("boolean")) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '&&' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'&&' solo aplica a booleanos, recibió " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1884,7 +1909,8 @@ class CUP$parser$actions {
     if (e1.equals("boolean") && e2.equals("boolean")) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: '||' solo aplica a booleanos, recibió " + e1 + " y " + e2);
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "'||' solo aplica a booleanos, recibió " + e1 + " y " + e2);
         RESULT = "error";
     }
 
@@ -1903,7 +1929,8 @@ class CUP$parser$actions {
     if (e.equals("boolean")) {
         RESULT = "boolean";
     } else {
-        System.err.println("Error semántico: negación (!) solo aplica a booleanos, recibió " + e);
+        Symbol operador = (Symbol) CUP$parser$stack.peek();
+        parser.semantic_error(operador, "negación (!) solo aplica a booleanos, recibió " + e);
         RESULT = "error";
     }
 
