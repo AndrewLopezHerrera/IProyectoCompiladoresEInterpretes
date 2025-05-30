@@ -9,8 +9,10 @@ public class TablaDeSimbolos {
     private TablaDeSimbolos Padre;
     private Map<String, LineaTabla> Variables;
     private List<TablaDeSimbolos> Hijos;
+    private String Nombre;
   
-    public TablaDeSimbolos(TablaDeSimbolos pPadre){
+    public TablaDeSimbolos(TablaDeSimbolos pPadre, String pNombreTabla){
+        Nombre = pNombreTabla;
         Padre = pPadre;
         Variables = new HashMap<>();
         Hijos = new ArrayList<>();
@@ -58,10 +60,10 @@ public class TablaDeSimbolos {
     
     @Override
     public String toString(){
-        String mensaje = "";
+        String mensaje = "\nNombre de tabla: " + Nombre;
         Collection<LineaTabla> lineas = Variables.values();
         for (LineaTabla linea : lineas)
-            mensaje += linea.toString() + "\n";
+            mensaje += "\n" + linea.toString();
         for (TablaDeSimbolos hijo : Hijos){
             String mensajeHijo = hijo.toString();
             mensaje += "\t" + mensajeHijo.replace("\n", "\n\t");
@@ -75,5 +77,13 @@ public class TablaDeSimbolos {
     
     public List<TablaDeSimbolos> getHijos(){
         return Hijos;
+    }
+    
+    public String getNombre(){
+        return Nombre;
+    }
+    
+    public void setNombre(String pNombre){
+        Nombre = pNombre;
     }
 }

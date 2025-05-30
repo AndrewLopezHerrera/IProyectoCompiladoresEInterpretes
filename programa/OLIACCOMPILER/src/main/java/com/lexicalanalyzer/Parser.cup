@@ -12,6 +12,7 @@ parser code {:
     private Map<String, Function> Functions = new HashMap<>() ;
     private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>() ;
     private TablaDeSimbolos ActualTable = null;
+    private Function ActualFunction = null;
 
     // Modificar para que reporte todos los errores
     public void syntax_error(Symbol s) {
@@ -29,14 +30,16 @@ parser code {:
     public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
         if(Functions.containsKey(pName)){
             ActualTable = null;
+            ActualFunction = null; 
             System.err.println("Error semántico: La función " + pName + 
                 " está duplicada");
             error_semantic_count++;
         }
         else{
             Function function = new Function(pTypeReturn, pName, pRow, pColumn, true);
+            ActualFunction = function;
             Functions.put(pName, function);
-            TablaDeSimbolos table = new TablaDeSimbolos(null);
+            TablaDeSimbolos table = new TablaDeSimbolos(null, pName);
             FunctionTables.put(pName, table);
             ActualTable = table;
         }
@@ -46,7 +49,7 @@ parser code {:
         int pColumn, boolean pInitialized){
         LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow,pColumn, pInitialized);
         if(!ActualTable.AgregarDato(line)){
-            System.err.println("Error semántico: La función " + pName + 
+            System.err.println("Error semántico: La variable " + pName + 
                 " está duplicada");
             return null;
         }
@@ -95,7 +98,7 @@ non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
 non terminal if_stmt, if_elif_stmt, if_else_stmt, if_elif_else_stmt, elif_blocks, elif_block;
 non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, simple_type, matrix_type, comment;
 non terminal func_call, arg_list, write_stmt, read_stmt;
-non terminal array_decl, array_int_expr, array_int_expr_list, for_expr, for_assign;
+non terminal array_decl, array_int_expr, array_int_expr_list, for_assign;
 
 precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
@@ -179,7 +182,7 @@ block ::=
     OPEN_BLOCK
 {:
     if(ActualTable != null){
-        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable);
+        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, ActualTable.getNombre());
         ActualTable.AgregarHijo(table);
         ActualTable = table;
     }
@@ -187,8 +190,10 @@ block ::=
     stmt_list
     CLOSE_BLOCK
 {:
-    if(ActualTable != null)
+    if(ActualTable != null){
+        RESULT = ActualTable;
         ActualTable = ActualTable.getPadre();
+    }
 :};
 
 stmt_list ::=
@@ -274,6 +279,11 @@ assign_stmt ::=
                     line.getTipo() + " en el identificador " + line.getNombre());
                 error_semantic_count++;
             }
+            else if(!line.getEstaInicializado()){
+                System.err.println("No se ha inicializado el identificador " +
+                    line.getNombre());
+                error_semantic_count++;
+            }
         }
     }
 :};
@@ -283,9 +293,11 @@ var_decl_asisgn_stmt ::=
 {:
     if(ActualTable != null && var != null){
         LineaTabla varLine = (LineaTabla) var;
-        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
-            System.out.println(varLine.getNombre() + " no existe en la linea " +
+        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)){
+            System.err.println(varLine.getNombre() + " no existe en la linea " +
                 varLine.getFila() + " y columna " + varLine.getColumna());
+            error_semantic_count++;
+        }
     }
     RESULT = null;
 :} ASSIGN expr
@@ -293,20 +305,46 @@ var_decl_asisgn_stmt ::=
 {:
     if(ActualTable != null && array != null){
         LineaTabla varLine = (LineaTabla) array;
-        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true))
-            System.out.println(varLine.getNombre() + " no existe en la linea " +
+        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)){
+            System.err.println(varLine.getNombre() + " no existe en la linea " +
                 varLine.getFila() + " y columna " + varLine.getColumna());
+            error_semantic_count++;
+        }
     }
     RESULT = null;
 :};
 
 expr ::=
-    func_call
-    | PARENTHESIS_L expr PARENTHESIS_R
-    | arith_expr
-    | rel_expr
-    | logic_expr
-    | array_int_expr
+    func_call:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | PARENTHESIS_L expr:type PARENTHESIS_R
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | arith_expr:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | rel_expr:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | logic_expr:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
+    | array_int_expr:type
+{:
+    if(type != null)
+        RESULT = type.toString();
+:}
     | literal:type
 {:
     if(type != null)
@@ -321,7 +359,13 @@ expr ::=
             error_semantic_count++;
             System.err.println("El identificador " + id + " no existe");
         }
-        RESULT = line.getTipo();
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else
+            RESULT = line.getTipo();
     }
 :}
     | ADDITION_ONE ID:name
@@ -337,6 +381,11 @@ expr ::=
             if(!line.getTipo().equals("int")){
                 System.err.println("No se permite el uso del ++ con el tipo " +
                     line.getTipo() + " en el identificador " + line.getNombre());
+                error_semantic_count++;
+            }
+            else if(!line.getEstaInicializado()){
+                System.err.println("No se ha inicializado el identificador " +
+                    line.getNombre());
                 error_semantic_count++;
             }
             else{
@@ -360,6 +409,11 @@ expr ::=
                     line.getTipo() + " en el identificador " + line.getNombre());
                 error_semantic_count++;
             }
+            else if(!line.getEstaInicializado()){
+                System.err.println("No se ha inicializado el identificador " +
+                    line.getNombre());
+                error_semantic_count++;
+            }
             else{
                 RESULT = line.getTipo();
             }
@@ -377,8 +431,8 @@ array_int_expr_list ::=
 
 arith_expr ::= expr:e1 ADDITION expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "no se puede sumar " + e1 + " con " + e2);
@@ -387,8 +441,8 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | expr:e1 SUBTRACT expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "no se puede restar " + e1 + " con " + e2);
@@ -397,8 +451,8 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | expr:e1 DIVISION expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = "float";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "no se puede dividir " + e1 + " entre " + e2);
@@ -407,8 +461,8 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | expr:e1 MULTIPLICATION expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = (e1.equals("float") || e2.equals("float")) ? "float" : "int";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "no se puede multiplicar " + e1 + " con " + e2);
@@ -417,8 +471,8 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | expr:e1 POWERS expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
-        RESULT = "float";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "no se puede elevar " + e1 + " a " + e2);
@@ -427,8 +481,8 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | expr:e1 MODULE expr:e2
 {:
-    if (e1.equals("int") && e2.equals("int")) {
-        RESULT = "int";
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
+        RESULT = e1;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "el módulo (%) solo aplica a enteros, recibió " + e1 + " y " + e2);
@@ -437,7 +491,7 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 :}
 | SUBTRACT expr:e
 {:
-    if (e.equals("int") || e.equals("float")) {
+    if (e != null && e.equals("int") || e.equals("float")) {
         RESULT = e;
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.peek(); // el símbolo actual
@@ -449,7 +503,7 @@ arith_expr ::= expr:e1 ADDITION expr:e2
 
 rel_expr ::= expr:e1 LT expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -459,7 +513,7 @@ rel_expr ::= expr:e1 LT expr:e2
 :}
 | expr:e1 LE expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -469,7 +523,7 @@ rel_expr ::= expr:e1 LT expr:e2
 :}
 | expr:e1 GT expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -479,7 +533,7 @@ rel_expr ::= expr:e1 LT expr:e2
 :}
 | expr:e1 GE expr:e2
 {:
-    if ((e1.equals("int") || e1.equals("float")) && (e2.equals("int") || e2.equals("float"))) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -489,7 +543,9 @@ rel_expr ::= expr:e1 LT expr:e2
 :}
 | expr:e1 EQ expr:e2
 {:
-    if (e1.equals(e2)) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float"))
+        || (e1.equals("string") && e2.equals("string")) || (e1.equals("char") && e2.equals("char"))
+        || (e1.equals("boolean") && e2.equals("boolean")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -499,7 +555,9 @@ rel_expr ::= expr:e1 LT expr:e2
 :}
 | expr:e1 NEQ expr:e2
 {:
-    if (e1.equals(e2)) {
+    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float"))
+        || (e1.equals("string") && e2.equals("string")) || (e1.equals("char") && e2.equals("char"))
+        || (e1.equals("boolean") && e2.equals("boolean")))) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -511,7 +569,7 @@ rel_expr ::= expr:e1 LT expr:e2
 
 logic_expr ::= expr:e1 CONJUNCTION expr:e2
 {:
-    if (e1.equals("boolean") && e2.equals("boolean")) {
+    if (e1 != null && e2 != null && e1.equals("boolean") && e2.equals("boolean")) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -521,7 +579,7 @@ logic_expr ::= expr:e1 CONJUNCTION expr:e2
 :}
 | expr:e1 DISJUNCTION expr:e2
 {:
-    if (e1.equals("boolean") && e2.equals("boolean")) {
+    if (e1 != null && e2 != null && e1.equals("boolean") && e2.equals("boolean")) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
@@ -531,7 +589,7 @@ logic_expr ::= expr:e1 CONJUNCTION expr:e2
 :}
 | DENIAL expr:e
 {:
-    if (e.equals("boolean")) {
+    if (e != null != e.equals("boolean")) {
         RESULT = "boolean";
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.peek();
@@ -539,10 +597,6 @@ logic_expr ::= expr:e1 CONJUNCTION expr:e2
         RESULT = "error";
     }
 :};
-
-for_expr ::=
-    logic_expr
-    | rel_expr;
 
 for_assign ::=
     assign_stmt
@@ -564,27 +618,164 @@ control_struct ::=
     | for_stmt;
 
 if_elif_else_stmt ::=
-    IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks ELSE block;
+    IF PARENTHESIS_L expr:type PARENTHESIS_R block:tableIf
+    elif_blocks ELSE block:tableElse
+{:
+    if(ActualTable != null && tableElse != null){
+        String typeExpr = tableIf.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: if necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+        TablaDeSimbolos tableAuxIf = (TablaDeSimbolos) tableIf;
+        tableAuxIf.setNombre("elif");
+        TablaDeSimbolos tableAuxElse = (TablaDeSimbolos) tableElse;
+        tableAuxElse.setNombre("else");
+    }
+:};
 
-if_else_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block ELSE block;
+if_else_stmt ::=
+    IF PARENTHESIS_L expr:type PARENTHESIS_R block:tableIf
+{:
+    if(ActualTable != null && tableIf != null && type != null){
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: if necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) tableIf;
+        tableAux.setNombre("if");
+    }
+:}
+    ELSE block:tableElse
+{:
+    if(ActualTable != null && tableElse != null){
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) tableElse;
+        tableAux.setNombre("else");
+    }
+:};
 
-if_elif_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block elif_blocks;
+if_elif_stmt ::= 
+    IF PARENTHESIS_L expr:type PARENTHESIS_R block:table
+    elif_blocks
+{:
+    if(ActualTable != null && table != null && type != null){
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: if necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
+        tableAux.setNombre("if");
+    }
+:};
 
-if_stmt ::= IF PARENTHESIS_L expr PARENTHESIS_R block;
+if_stmt ::= 
+    IF PARENTHESIS_L expr:type PARENTHESIS_R block:table
+{:
+    if(ActualTable != null && table != null){
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: if necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
+        tableAux.setNombre("if");
+    }
+:};
 
 elif_blocks ::=
     elif_block elif_blocks
     | elif_block;
 
-elif_block ::= ELIF PARENTHESIS_L expr PARENTHESIS_R block;
+elif_block ::=
+    ELIF PARENTHESIS_L expr:type PARENTHESIS_R block:table
+{:
+    if(ActualTable != null && table != null && type != null){
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: elif necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
+        tableAux.setNombre("elif");
+    }
+:};
 
-do_while_stmt ::= DO block WHILE PARENTHESIS_L expr PARENTHESIS_R;
+do_while_stmt ::=
+    DO block:table WHILE PARENTHESIS_L expr:type PARENTHESIS_R
+{:
+    if(ActualTable != null && type != null && table != null){
+        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
+        tableAux.setNombre("do-while");
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: do-while necesita una " +
+                "expresion de tipo booleano para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+    }
+:};
 
-for_stmt ::= FOR PARENTHESIS_L for_assign END_LINE for_expr END_LINE assign_stmt PARENTHESIS_R block;
+for_stmt ::=
+    FOR
+{:
+    if(ActualTable != null){
+        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "for");
+        ActualTable.AgregarHijo(table);
+        ActualTable = table;
+    }
+:}
+    PARENTHESIS_L for_assign END_LINE expr:type END_LINE assign_stmt PARENTHESIS_R block
+{:
+    if(ActualTable != null && type != null){
+        ActualTable = ActualTable.getPadre();
+        String typeExpr = type.toString();
+        if(!typeExpr.equals("boolean")){
+            System.err.println("Error semántico: for necesita una " +
+                "expresion de tipo booleano para en su segundo parámetro para funcionar. En cambio, se " +
+                "una expresion de tipo " + typeExpr + ".");
+            error_semantic_count++;
+        }
+    }
+:};
 
-return_stmt ::= RETURN expr;
+return_stmt ::= RETURN expr:type
+{:
+    if(ActualTable != null){
+        String typeReturn = type.toString();
+        if(!typeReturn.equals(ActualFunction.getTipo())){
+            System.err.println("Error semántico: El valor retornado " +
+                typeReturn + " no corresponde con el tipo de retorno " +
+                ActualFunction.getTipo() + " de la funcion " +
+                ActualFunction.getNombre() + ".");
+            error_semantic_count++;
+        }
+    }
+:};
 
-break_stmt ::= BREAK;
+break_stmt ::= BREAK
+{:
+    if(ActualTable != null){
+        if(!ActualTable.getNombre().equals("for")
+            || !ActualTable.getNombre().equals("do-while")){
+            System.err.println("Error semántico: El break solo debe usarse en "
+                + "iteradores for o do-while");
+            error_semantic_count++;
+        }   
+    }
+:};
 
 type ::= 
     simple_type:typeString {: RESULT = typeString.toString(); :}
@@ -632,10 +823,10 @@ func_call ::=
         }
     }
 :}
-    | ID:nameFuncArgsEmpty PARENTHESIS_L PARENTHESIS_R
+    | ID:name PARENTHESIS_L PARENTHESIS_R
 {:
-    if(ActualTable != null && nameFuncArgsEmpty != null){
-        String nameCall = nameFuncArgsEmpty.toString();
+    if(ActualTable != null && name != null){
+        String nameCall = name.toString();
         String argsCall = "";
         if(Functions.containsKey(nameCall)){
             Function function = Functions.get(nameCall);
@@ -673,14 +864,152 @@ arg_list ::= expr:type COMMA arg_list:types
 
 write_stmt ::= 
     WRITE_INT INT_LITERAL 
-    | WRITE_INT ID
+    | WRITE_INT ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo entero");
+                error_semantic_count++;
+            }   
+        }
+    }
+:}
     | WRITE_FLOAT FLOAT_LITERAL 
-    | WRITE_FLOAT ID
+    | WRITE_FLOAT ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo flotante");
+                error_semantic_count++;
+            }   
+        }
+    }
+:}
     | WRITE_STRING STRING_LITERAL 
-    | WRITE_STRING ID
+    | WRITE_STRING ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo string");
+                error_semantic_count++;
+            }   
+        }
+    }
+:}
     | WRITE_BOOLEAN BOOLEAN_LITERAL 
-    | WRITE_BOOLEAN ID;
+    | WRITE_BOOLEAN ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo booleano");
+                error_semantic_count++;
+            }   
+        }
+    }
+:};
 
 read_stmt ::= 
-    READ_INT ID
-    | READ_FLOAT ID;
+    READ_INT ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("int")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo entero");
+                error_semantic_count++;
+            }   
+        }
+    }
+:}
+    | READ_FLOAT ID:name
+{:
+    if(ActualTable != null && name == null){
+        String id = name.toString();
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if(line == null){
+            System.err.println("Error semántico: El identificador " +
+                id + " no existe");
+            error_semantic_count++;
+        }
+        else if(!line.getEstaInicializado()){
+            System.err.println("No se ha inicializado el identificador " +
+                line.getNombre());
+            error_semantic_count++;
+        }
+        else{
+            if(!line.getTipo().equals("float")){
+                System.err.println("Error semántico: El identificador debe ser"
+                    + " de tipo flotante");
+                error_semantic_count++;
+            }   
+        }
+    }
+:};
