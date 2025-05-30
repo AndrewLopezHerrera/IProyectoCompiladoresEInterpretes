@@ -233,14 +233,22 @@ array_decl ::=
     | matrix_type;
 
 assign_stmt ::=
-    ID:name ASSIGN expr
+    ID:name ASSIGN expr:type
 {:
-    if(ActualTable != null && name != null){
+    if(ActualTable != null && name != null && type != null){
         String id = name.toString();
+        String typeVar = type.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
-        if(line == null){
+        if(line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)){
             error_semantic_count++;
             System.err.println("El identificador " + id + " no existe");
+        }
+        else if(!typeVar.equals(line.getTipo())){
+            error_semantic_count++;
+            System.err.println("Error semántico: no se puede asigna el tipo " +
+                typeVar + " a la variable " + line.getNombre() + " con tipo " +
+                line.getTipo() + ".");
+            error_semantic_count++;
         }
     }
 :}
@@ -289,18 +297,24 @@ assign_stmt ::=
 :};
 
 var_decl_asisgn_stmt ::=
-    var_decl:var
+    var_decl:var ASSIGN expr:type
 {:
-    if(ActualTable != null && var != null){
-        LineaTabla varLine = (LineaTabla) var;
-        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)){
-            System.err.println(varLine.getNombre() + " no existe en la linea " +
-                varLine.getFila() + " y columna " + varLine.getColumna());
+    if(ActualTable != null && var != null && type != null){
+        String typeVar = type.toString();
+        LineaTabla line = (LineaTabla) var;
+        if(line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)){
+            error_semantic_count++;
+            System.err.println("El identificador " + line.getNombre() + " no existe");
+        }
+        else if(!typeVar.equals(line.getTipo())){
+            error_semantic_count++;
+            System.err.println("Error semántico: no se puede asigna el tipo " +
+                typeVar + " a la variable " + line.getNombre() + " con tipo " +
+                line.getTipo() + ".");
             error_semantic_count++;
         }
     }
-    RESULT = null;
-:} ASSIGN expr
+:}
     | array_decl:array ASSIGN expr
 {:
     if(ActualTable != null && array != null){
@@ -713,11 +727,18 @@ elif_block ::=
 :};
 
 do_while_stmt ::=
-    DO block:table WHILE PARENTHESIS_L expr:type PARENTHESIS_R
+    DO
 {:
-    if(ActualTable != null && type != null && table != null){
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
-        tableAux.setNombre("do-while");
+    if(ActualTable != null){
+        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "do-while");
+        ActualTable.AgregarHijo(table);
+        ActualTable = table;
+    }
+:}
+    block WHILE PARENTHESIS_L expr:type PARENTHESIS_R
+{:
+    if(ActualTable != null && type != null){
+        ActualTable = ActualTable.getPadre();
         String typeExpr = type.toString();
         if(!typeExpr.equals("boolean")){
             System.err.println("Error semántico: do-while necesita una " +
@@ -768,12 +789,18 @@ return_stmt ::= RETURN expr:type
 break_stmt ::= BREAK
 {:
     if(ActualTable != null){
-        if(!ActualTable.getNombre().equals("for")
-            || !ActualTable.getNombre().equals("do-while")){
-            System.err.println("Error semántico: El break solo debe usarse en "
-                + "iteradores for o do-while");
+        TablaDeSimbolos actualTable = ActualTable;
+        while (actualTable != null){
+            if(ActualTable.getNombre().equals("for")
+                || ActualTable.getNombre().equals("do-while"))
+                break;
+            actualTable = actualTable.getPadre();
+        }
+        if(actualTable == null){
+            System.err.println("Error semántico: El BREAK solo puede utilizarse"
+                + " dentro de iteradores for o do-while");
             error_semantic_count++;
-        }   
+        }
     }
 :};
 
