@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 parser code {:
     public int error_count = 0;
@@ -73,6 +76,24 @@ parser code {:
         }
         error_semantic_count++;
     }
+
+    List<InstruccionIntermedia> codigoIntermedio = new ArrayList<>();
+    int contadorTemporales = 0;
+
+    public String nuevoTemporal() {
+        return "t" + (contadorTemporales++);
+    }
+
+    public void escribirCodigoIntermedio(String archivo) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(archivo))) {
+            for (InstruccionIntermedia inst : codigoIntermedio) {
+                pw.println(inst);
+            }
+        } catch (IOException e) {
+            System.err.println("No se pudo escribir el archivo de código intermedio.");
+        }
+    }
+
 
 :}
 
@@ -232,69 +253,78 @@ array_decl ::=
     | type ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET
     | matrix_type;
 
-assign_stmt ::=
-    ID:name ASSIGN expr:type
+assign_stmt ::= 
+    ID:name ASSIGN expr:type 
 {:
-    if(ActualTable != null && name != null && type != null){
+    if (ActualTable != null && name != null && type != null) {
         String id = name.toString();
-        String typeVar = type.toString();
+        String[] tipoValor = (String[]) type; // tipo y valor temporal
+        String tipoExpr = tipoValor[0];
+        String valorExpr = tipoValor[1];
+
         LineaTabla line = ActualTable.BuscarDato(id);
-        if(line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)){
+        if (line == null || !ActualTable.setInicializacionDato(id, true)) {
             error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
-        }
-        else if(!typeVar.equals(line.getTipo())){
+            System.err.println("El identificador " + id + " no existe.");
+        } else if (!tipoExpr.equals(line.getTipo())) {
             error_semantic_count++;
-            System.err.println("Error semántico: no se puede asigna el tipo " +
-                typeVar + " a la variable " + line.getNombre() + " con tipo " +
-                line.getTipo() + ".");
-            error_semantic_count++;
+            System.err.println("Error semántico: no se puede asignar el tipo " +
+                tipoExpr + " a la variable " + id + " de tipo " + line.getTipo() + ".");
+        } else {
+            parser.codigoIntermedio.add(new AsignacionInstr(id, valorExpr));
         }
     }
 :}
-    | ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
-    | ID LBRACKET expr RBRACKET ASSIGN expr
-    | ADDITION_ONE ID:name
+| ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
 {:
-    if(ActualTable != null && name != null){
+    // TODO: Código intermedio para asignación a matriz 2D
+    System.err.println("⚠ Asignación a matriz 2D aún no implementada.");
+:}
+| ID LBRACKET expr RBRACKET ASSIGN expr
+{:
+    // TODO: Código intermedio para asignación a matriz 1D
+    System.err.println("⚠ Asignación a matriz 1D aún no implementada.");
+:}
+| ADDITION_ONE ID:name 
+{:
+    if (ActualTable != null && name != null) {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
-        if(line == null){
+        if (line == null) {
             error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
-        }
-        else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("No se permite el uso del ++ con el tipo " +
-                    line.getTipo() + " en el identificador " + line.getNombre());
-                error_semantic_count++;
-            }
+            System.err.println("El identificador " + id + " no existe.");
+        } else if (!line.getTipo().equals("int")) {
+            error_semantic_count++;
+            System.err.println("El operador ++ solo se permite sobre enteros.");
+        } else {
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
+            parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
         }
     }
 :}
-    | SUBTRACT_ONE ID:name 
+| SUBTRACT_ONE ID:name 
 {:
-    if(ActualTable != null && name != null){
+    if (ActualTable != null && name != null) {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
-        if(line == null){
+        if (line == null) {
             error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
-        }
-        else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("No se permite el uso del -- con el tipo " +
-                    line.getTipo() + " en el identificador " + line.getNombre());
-                error_semantic_count++;
-            }
-            else if(!line.getEstaInicializado()){
-                System.err.println("No se ha inicializado el identificador " +
-                    line.getNombre());
-                error_semantic_count++;
-            }
+            System.err.println("El identificador " + id + " no existe.");
+        } else if (!line.getTipo().equals("int")) {
+            error_semantic_count++;
+            System.err.println("El operador -- solo se permite sobre enteros.");
+        } else if (!line.getEstaInicializado()) {
+            error_semantic_count++;
+            System.err.println("No se ha inicializado el identificador " + id);
+        } else {
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new OperacionInstr(temp, id, "-", "1"));
+            parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
         }
     }
 :};
+
 
 var_decl_asisgn_stmt ::=
     var_decl:var ASSIGN expr:type
@@ -332,56 +362,55 @@ expr ::=
     func_call:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | PARENTHESIS_L expr:type PARENTHESIS_R
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | arith_expr:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | rel_expr:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | logic_expr:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | array_int_expr:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | literal:type
 {:
     if(type != null)
-        RESULT = type.toString();
+        RESULT = type;
 :}
     | ID:idDeclarated
 {:
-    if(ActualTable != null && idDeclarated != null){
+    if (ActualTable != null && idDeclarated != null) {
         String id = idDeclarated.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
-        if(line == null){
+        if (line == null) {
             error_semantic_count++;
             System.err.println("El identificador " + id + " no existe");
-        }
-        else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
-                line.getNombre());
+        } else if (!line.getEstaInicializado()) {
             error_semantic_count++;
+            System.err.println("No se ha inicializado el identificador " + id);
+        } else {
+            RESULT = new String[] { line.getTipo(), id };
         }
-        else
-            RESULT = line.getTipo();
     }
 :}
+
     | ADDITION_ONE ID:name
 {:
     if(ActualTable != null && name != null){
@@ -443,185 +472,313 @@ array_int_expr_list ::=
     INT_LITERAL COMMA array_int_expr_list
     | INT_LITERAL;
 
-arith_expr ::= expr:e1 ADDITION expr:e2
+arith_expr ::=
+    expr:e1 ADDITION expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "+", val2));
+
+        RESULT = new String[] {
+            (tipo1.equals("float") || tipo2.equals("float")) ? "float" : "int",
+            temp
+        };
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede sumar " + e1 + " con " + e2);
-        RESULT = "error";
+        parser.semantic_error(operador, "no se puede sumar " + tipo1 + " con " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 SUBTRACT expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "-", val2));
+
+        RESULT = new String[] {
+            (tipo1.equals("float") || tipo2.equals("float")) ? "float" : "int",
+            temp
+        };
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede restar " + e1 + " con " + e2);
-        RESULT = "error";
-    }
-:}
-| expr:e1 DIVISION expr:e2
-{:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
-    } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede dividir " + e1 + " entre " + e2);
-        RESULT = "error";
+        parser.semantic_error(operador, "no se puede restar " + tipo1 + " con " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 MULTIPLICATION expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "*", val2));
+
+        RESULT = new String[] {
+            (tipo1.equals("float") || tipo2.equals("float")) ? "float" : "int",
+            temp
+        };
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede multiplicar " + e1 + " con " + e2);
-        RESULT = "error";
+        parser.semantic_error(operador, "no se puede multiplicar " + tipo1 + " con " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
-| expr:e1 POWERS expr:e2
+| expr:e1 DIVISION expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "/", val2));
+
+        RESULT = new String[] {
+            "float", // División siempre se trata como flotante
+            temp
+        };
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede elevar " + e1 + " a " + e2);
-        RESULT = "error";
+        parser.semantic_error(operador, "no se puede dividir " + tipo1 + " con " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 MODULE expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = e1;
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if (tipo1.equals("int") && tipo2.equals("int")) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "%", val2));
+
+        RESULT = new String[] { "int", temp };
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "el módulo (%) solo aplica a enteros, recibió " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(operador, "el operador módulo sólo se permite entre enteros");
+        RESULT = new String[] { "error", "" };
     }
 :}
 | SUBTRACT expr:e
 {:
-    if (e != null && e.equals("int") || e.equals("float")) {
-        RESULT = e;
+    String[] v = (String[]) e;
+    String tipo = v[0];
+    String val = v[1];
+
+    if (tipo.equals("int") || tipo.equals("float")) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, "-", val, ""));
+        RESULT = new String[] { tipo, temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.peek(); // el símbolo actual
-        parser.semantic_error(operador, "el signo negativo solo aplica a int o float, recibió " + e);
-        RESULT = "error";
+        parser.semantic_error(null, "el operador unario '-' solo se permite para enteros o flotantes");
+        RESULT = new String[] { "error", "" };
     }
 :};
 
 
 rel_expr ::= expr:e1 LT expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "<", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'<' no válido entre " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'<' no válido entre " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 LE expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "<=", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'<=' no válido entre " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'<=' no válido entre " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 GT expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, ">", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'>' no válido entre " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'>' no válido entre " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 GE expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals("int") || tipo1.equals("float")) &&
+        (tipo2.equals("int") || tipo2.equals("float"))) {
+
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, ">=", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'>=' no válido entre " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'>=' no válido entre " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 EQ expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float"))
-        || (e1.equals("string") && e2.equals("string")) || (e1.equals("char") && e2.equals("char"))
-        || (e1.equals("boolean") && e2.equals("boolean")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals(tipo2))) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "==", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "comparación '==' entre tipos diferentes: " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "comparación '==' entre tipos diferentes: " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 NEQ expr:e2
 {:
-    if ((e1 != null && e2 != null) && ((e1.equals("int") && e2.equals("int")) || (e1.equals("float") && e2.equals("float"))
-        || (e1.equals("string") && e2.equals("string")) || (e1.equals("char") && e2.equals("char"))
-        || (e1.equals("boolean") && e2.equals("boolean")))) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+    String tipo1 = v1[0], val1 = v1[1];
+    String tipo2 = v2[0], val2 = v2[1];
+
+    if ((tipo1.equals(tipo2))) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "!=", val2));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "comparación '!=' entre tipos diferentes: " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "comparación '!=' entre tipos diferentes: " + tipo1 + " y " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :};
 
 
 logic_expr ::= expr:e1 CONJUNCTION expr:e2
 {:
-    if (e1 != null && e2 != null && e1.equals("boolean") && e2.equals("boolean")) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    if (v1[0].equals("boolean") && v2[0].equals("boolean")) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, v1[1], "&&", v2[1]));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'&&' solo aplica a booleanos, recibió " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'&&' solo aplica a booleanos, recibió " + v1[0] + " y " + v2[0]);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | expr:e1 DISJUNCTION expr:e2
 {:
-    if (e1 != null && e2 != null && e1.equals("boolean") && e2.equals("boolean")) {
-        RESULT = "boolean";
+    String[] v1 = (String[]) e1;
+    String[] v2 = (String[]) e2;
+
+    if (v1[0].equals("boolean") && v2[0].equals("boolean")) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionInstr(temp, v1[1], "||", v2[1]));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "'||' solo aplica a booleanos, recibió " + e1 + " y " + e2);
-        RESULT = "error";
+        parser.semantic_error(null, "'||' solo aplica a booleanos, recibió " + v1[0] + " y " + v2[0]);
+        RESULT = new String[] { "error", "" };
     }
 :}
 | DENIAL expr:e
 {:
-    if (e != null != e.equals("boolean")) {
-        RESULT = "boolean";
+    String[] v = (String[]) e;
+
+    if (v[0].equals("boolean")) {
+        String temp = parser.nuevoTemporal();
+        parser.codigoIntermedio.add(new OperacionUnariaInstr(temp, "!", v[1]));
+        RESULT = new String[] { "boolean", temp };
     } else {
-        Symbol operador = (Symbol) CUP$parser$stack.peek();
-        parser.semantic_error(operador, "negación (!) solo aplica a booleanos, recibió " + e);
-        RESULT = "error";
+        parser.semantic_error(null, "negación (!) solo aplica a booleanos, recibió " + v[0]);
+        RESULT = new String[] { "error", "" };
     }
 :};
+
 
 for_assign ::=
     assign_stmt
     | var_decl_asisgn_stmt;
 
-literal ::=
-    BOOLEAN_LITERAL {:RESULT = "boolean";:}
-    | STRING_LITERAL {:RESULT = "string";:}
-    | CHAR_LITERAL {:RESULT = "char";:}
-    | FLOAT_LITERAL {:RESULT = "float";:}
-    | INT_LITERAL {:RESULT = "int";:};
+literal ::= INT_LITERAL:n
+{:
+    RESULT = new String[] { "int", n.toString() };
+:}
+| FLOAT_LITERAL:n
+{:
+    RESULT = new String[] { "float", n.toString() };
+:}
+| BOOLEAN_LITERAL:n
+{:
+    RESULT = new String[] { "boolean", n.toString() };
+:}
+| STRING_LITERAL:n
+{:
+    RESULT = new String[] { "string", n.toString() };
+:}
+| CHAR_LITERAL:n
+{:
+    RESULT = new String[] { "char", n.toString() };
+:};
 
 control_struct ::=
     if_elif_else_stmt
