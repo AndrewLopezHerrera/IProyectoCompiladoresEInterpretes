@@ -94,7 +94,11 @@ parser code {:
         }
     }
 
+    private int contadorEtiquetas = 0;
 
+    public String nuevaEtiqueta(String base) {
+        return "et_" + base + "_" + (contadorEtiquetas++);
+    }
 :}
 
 
@@ -272,6 +276,9 @@ assign_stmt ::=
                 tipoExpr + " a la variable " + id + " de tipo " + line.getTipo() + ".");
         } else {
             parser.codigoIntermedio.add(new AsignacionInstr(id, valorExpr));
+            if (ActualTable != null) {
+                ActualTable.agregarInstruccion(new AsignacionInstr(id, valorExpr));
+            }
         }
     }
 :}
@@ -283,7 +290,7 @@ assign_stmt ::=
 | ID LBRACKET expr RBRACKET ASSIGN expr
 {:
     // TODO: Código intermedio para asignación a matriz 1D
-    System.err.println("⚠ Asignación a matriz 1D aún no implementada.");
+    System.err.println(" Asignación a matriz 1D aún no implementada.");
 :}
 | ADDITION_ONE ID:name 
 {:
@@ -300,9 +307,14 @@ assign_stmt ::=
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
             parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+            if (ActualTable != null) {
+                ActualTable.agregarInstruccion(new OperacionInstr(temp, id, "+", "1"));
+                ActualTable.agregarInstruccion(new AsignacionInstr(id, temp));
+            }
         }
     }
 :}
+
 | SUBTRACT_ONE ID:name 
 {:
     if (ActualTable != null && name != null) {
@@ -326,26 +338,31 @@ assign_stmt ::=
 :};
 
 
-var_decl_asisgn_stmt ::=
-    var_decl:var ASSIGN expr:type
+var_decl_asisgn_stmt ::= var_decl:var ASSIGN expr:type
 {:
     if(ActualTable != null && var != null && type != null){
-        String typeVar = type.toString();
+        String[] tipoValor = (String[]) type; // tipo y valor temporal
+        String tipoExpr = tipoValor[0];
+        String valorExpr = tipoValor[1];
+
         LineaTabla line = (LineaTabla) var;
         if(line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)){
             error_semantic_count++;
             System.err.println("El identificador " + line.getNombre() + " no existe");
         }
-        else if(!typeVar.equals(line.getTipo())){
+        else if(!tipoExpr.equals(line.getTipo())){
             error_semantic_count++;
-            System.err.println("Error semántico: no se puede asigna el tipo " +
-                typeVar + " a la variable " + line.getNombre() + " con tipo " +
+            System.err.println("Error semántico: no se puede asignar el tipo " +
+                tipoExpr + " a la variable " + line.getNombre() + " con tipo " +
                 line.getTipo() + ".");
-            error_semantic_count++;
+        }
+        else {
+            //Código intermedio para declaración con asignación
+            parser.codigoIntermedio.add(new DeclAsigInstr(line.getTipo(), line.getNombre(), valorExpr));
         }
     }
 :}
-    | array_decl:array ASSIGN expr
+| array_decl:array ASSIGN expr
 {:
     if(ActualTable != null && array != null){
         LineaTabla varLine = (LineaTabla) array;
@@ -357,6 +374,7 @@ var_decl_asisgn_stmt ::=
     }
     RESULT = null;
 :};
+
 
 expr ::=
     func_call:type
@@ -807,28 +825,45 @@ if_elif_else_stmt ::=
     }
 :};
 
-if_else_stmt ::=
-    IF PARENTHESIS_L expr:type PARENTHESIS_R block:tableIf
+if_else_stmt ::= 
+    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
+    ELSE block:blockElse
 {:
-    if(ActualTable != null && tableIf != null && type != null){
-        String typeExpr = type.toString();
-        if(!typeExpr.equals("boolean")){
-            System.err.println("Error semántico: if necesita una " +
-                "expresion de tipo booleano para funcionar. En cambio, se " +
-                "una expresion de tipo " + typeExpr + ".");
-            error_semantic_count++;
+    if (cond != null) {
+        String[] condicion = (String[]) cond;
+        String tempCond = condicion[1];
+
+        String etiquetaElse = parser.nuevaEtiqueta("if_else");
+        String etiquetaFin = parser.nuevaEtiqueta("if_fin");
+
+        // Etiqueta condicional
+        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaElse));
+
+        // Instrucciones del bloque IF
+        if (blockIf instanceof TablaDeSimbolos tablaIf) {
+            tablaIf.setNombre("if");
+            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
         }
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) tableIf;
-        tableAux.setNombre("if");
-    }
-:}
-    ELSE block:tableElse
-{:
-    if(ActualTable != null && tableElse != null){
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) tableElse;
-        tableAux.setNombre("else");
+
+        // Salto al final
+        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+
+        // Etiqueta ELSE
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaElse));
+        if (blockElse instanceof TablaDeSimbolos tablaElse) {
+            tablaElse.setNombre("else");
+            for (InstruccionIntermedia inst : tablaElse.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
+        }
+
+        // Etiqueta final
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
     }
 :};
+
 
 if_elif_stmt ::= 
     IF PARENTHESIS_L expr:type PARENTHESIS_R block:table
@@ -847,21 +882,57 @@ if_elif_stmt ::=
     }
 :};
 
-if_stmt ::= 
-    IF PARENTHESIS_L expr:type PARENTHESIS_R block:table
+selection_stmt ::= IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK
 {:
-    if(ActualTable != null && table != null){
-        String typeExpr = type.toString();
-        if(!typeExpr.equals("boolean")){
-            System.err.println("Error semántico: if necesita una " +
-                "expresion de tipo booleano para funcionar. En cambio, se " +
-                "una expresion de tipo " + typeExpr + ".");
-            error_semantic_count++;
+    String[] condicion = (String[]) cond;
+    String tempCond = condicion[1];
+
+    String etiquetaFin = parser.nuevaEtiqueta();
+
+    parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaFin));
+    parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) ifbody);
+    parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
+:}
+| IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK ELSE OPEN_BLOCK stmt_list:elsebody CLOSE_BLOCK
+{:
+    String[] condicion = (String[]) cond;
+    String tempCond = condicion[1];
+
+    String etiquetaElse = parser.nuevaEtiqueta();
+    String etiquetaFin = parser.nuevaEtiqueta();
+
+    parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaElse));
+    parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) ifbody);
+    parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+    parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaElse));
+    parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) elsebody);
+    parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
+:};
+
+
+if_stmt ::= 
+    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
+{:
+    if (cond != null) {
+        String[] condicion = (String[]) cond;
+        String tempCond = condicion[1];
+
+        String etiquetaFin = parser.nuevaEtiqueta("if_fin");
+
+        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaFin));
+
+        if (blockIf instanceof TablaDeSimbolos tablaIf) {
+            tablaIf.setNombre("if");
+            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
         }
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
-        tableAux.setNombre("if");
+
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
     }
 :};
+
+
 
 elif_blocks ::=
     elif_block elif_blocks

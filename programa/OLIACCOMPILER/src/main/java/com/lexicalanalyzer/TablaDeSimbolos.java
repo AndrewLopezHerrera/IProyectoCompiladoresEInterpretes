@@ -9,6 +9,7 @@ public class TablaDeSimbolos {
     private TablaDeSimbolos Padre;
     private Map<String, LineaTabla> Variables;
     private List<TablaDeSimbolos> Hijos;
+    private List<InstruccionIntermedia> instrucciones = new ArrayList<>();
     private String Nombre;
   
     public TablaDeSimbolos(TablaDeSimbolos pPadre, String pNombreTabla){
@@ -86,4 +87,13 @@ public class TablaDeSimbolos {
     public void setNombre(String pNombre){
         Nombre = pNombre;
     }
+
+    public void agregarInstruccion(InstruccionIntermedia instr) {
+        instrucciones.add(instr);
+    }
+
+    public List<InstruccionIntermedia> getInstrucciones() {
+        return instrucciones;
+    }
+
 }

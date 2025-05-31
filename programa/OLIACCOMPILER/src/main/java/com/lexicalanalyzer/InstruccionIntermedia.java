@@ -103,4 +103,47 @@ class GeneradorTemporales {
     }
 }
 
+// ifFalse cond goto etiqueta
+class IfFalseInstr extends InstruccionIntermedia {
+    private String condicion;
+    private String etiqueta;
+
+    public IfFalseInstr(String condicion, String etiqueta) {
+        this.condicion = condicion;
+        this.etiqueta = etiqueta;
+    }
+
+    @Override
+    public String toString() {
+        return "ifFalse " + condicion + " goto " + etiqueta;
+    }
+}
+
+// goto etiqueta
+class GotoInstr extends InstruccionIntermedia {
+    private String etiqueta;
+
+    public GotoInstr(String etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+
+    @Override
+    public String toString() {
+        return "goto " + etiqueta;
+    }
+}
+
+// etiqueta:
+class EtiquetaInstr extends InstruccionIntermedia {
+    private String etiqueta;
+
+    public EtiquetaInstr(String etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+
+    @Override
+    public String toString() {
+        return etiqueta + ":";
+    }
+}
 
