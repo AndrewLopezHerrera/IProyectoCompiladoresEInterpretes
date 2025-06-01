@@ -1,4 +1,5 @@
 package com.lexicalanalyzer;
+import java.util.List;
 
 /**
  * Clase abstracta base para todas las instrucciones intermedias generadas por el compilador.
@@ -106,7 +107,7 @@ class OperacionInstr extends InstruccionIntermedia {
      *
      * @param destino  Variable donde se almacena el resultado.
      * @param op1      Primer operando.
-     * @param operador Operador (por ejemplo, +, -, *, /).
+     * @param operador Operador (por ejemplo, +, -, *, //).
      * @param op2      Segundo operando.
      */
     public OperacionInstr(String destino, String op1, String operador, String op2) {
@@ -238,5 +239,115 @@ class EtiquetaInstr extends InstruccionIntermedia {
     @Override
     public String toString() {
         return etiqueta + ":";
+    }
+}
+
+/**
+ * Representa el inicio de una funcion en el codigo intermedio.
+ */
+class InicioFuncionInstr extends InstruccionIntermedia {
+    private String nombre;
+
+    /**
+     * Constructor de la instruccion de inicio de funcion.
+     * 
+     * @param nombre Nombre de la funcion
+     */
+    public InicioFuncionInstr(String nombre) {
+        this.nombre = nombre;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena con el nombre de la funcion precedida por 'funcion'
+     */
+    @Override
+    public String toString() {
+        return "funcion " + nombre + ":";
+    }
+}
+
+/**
+ * Representa el fin de una funcion en el codigo intermedio.
+ */
+class FinFuncionInstr extends InstruccionIntermedia {
+    private String nombre;
+
+    /**
+     * Constructor de la instruccion de fin de funcion.
+     * 
+     * @param nombre Nombre de la funcion
+     */
+    public FinFuncionInstr(String nombre) {
+        this.nombre = nombre;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena indicando el fin de la funcion
+     */
+    @Override
+    public String toString() {
+        return "fin_funcion " + nombre;
+    }
+}
+
+/**
+ * Representa una llamada a una funcion en el codigo intermedio.
+ */
+class LlamadaFuncionInstr extends InstruccionIntermedia {
+    private String nombre;
+    private List<String> argumentos;
+    private String destino;
+
+    /**
+     * Constructor de la instruccion de llamada a funcion.
+     * 
+     * @param nombre     Nombre de la funcion a llamar
+     * @param argumentos Lista de argumentos que se pasan a la funcion
+     * @param destino    Nombre del temporal que almacenara el resultado
+     */
+    public LlamadaFuncionInstr(String nombre, List<String> argumentos, String destino) {
+        this.nombre = nombre;
+        this.argumentos = argumentos;
+        this.destino = destino;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena representando la llamada a la funcion
+     */
+    @Override
+    public String toString() {
+        return destino + " = call " + nombre + "(" + String.join(", ", argumentos) + ")";
+    }
+}
+
+/**
+ * Representa una instruccion de retorno en una funcion.
+ */
+class ReturnInstr extends InstruccionIntermedia {
+    private String valor;
+
+    /**
+     * Constructor de la instruccion de retorno.
+     * 
+     * @param valor Valor que sera retornado por la funcion
+     */
+    public ReturnInstr(String valor) {
+        this.valor = valor;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena con el valor a retornar
+     */
+    @Override
+    public String toString() {
+        return "return " + valor;
     }
 }
