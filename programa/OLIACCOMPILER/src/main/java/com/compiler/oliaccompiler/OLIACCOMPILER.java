@@ -47,7 +47,7 @@ public class OLIACCOMPILER implements Runnable {
             // Mostrar tabla de símbolos
             p.printTables();
 
-        } catch (Exception e) {
+        }catch (Exception e) {
             System.err.println("Error durante el parseo: " + e.getMessage());
         }
     }
