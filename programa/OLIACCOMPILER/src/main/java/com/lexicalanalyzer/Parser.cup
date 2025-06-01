@@ -10,32 +10,57 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 parser code {:
+    // Contador de errores sintacticos
     public int error_count = 0;
+
+    // Contador de errores semanticos
     public int error_semantic_count = 0;
-    private Map<String, Function> Functions = new HashMap<>() ;
-    private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>() ;
+
+    // Mapa de funciones declaradas en el programa
+    private Map<String, Function> Functions = new HashMap<>();
+
+    // Mapa de tablas de simbolos por cada funcion
+    private Map<String, TablaDeSimbolos> FunctionTables = new HashMap<>();
+
+    // Tabla de simbolos actual en uso
     private TablaDeSimbolos ActualTable = null;
+
+    // Funcion actual en procesamiento
     private Function ActualFunction = null;
 
-    // Modificar para que reporte todos los errores
+    /**
+     * Maneja errores sintacticos encontrados por el parser
+     * @param s simbolo donde ocurrio el error
+     */
     public void syntax_error(Symbol s) {
         if (s != null) {
-            System.out.println("Error sintáctico en la línea " +(s.left + 1) +
+            System.out.println("Error sintactico en la linea " + (s.left + 1) +
             ", columna " + (s.right + 1) + ": " + s.value);
         }
         error_count++;
     }
 
+    /**
+     * Reporta un error fatal durante el analisis sintactico
+     * @param message descripcion del error
+     * @param info objeto relacionado con el error
+     */
     public void report_fatal_error(String message, Object info) {
-        System.err.println(">>> Error FATAL de análisis sintáctico: " + message);
+        System.err.println(">>> Error FATAL de analisis sintactico: " + message);
     }
 
+    /**
+     * Crea una nueva funcion y su tabla de simbolos si no esta duplicada
+     * @param pTypeReturn tipo de retorno de la funcion
+     * @param pName nombre de la funcion
+     * @param pRow fila de declaracion
+     * @param pColumn columna de declaracion
+     */
     public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
         if(Functions.containsKey(pName)){
             ActualTable = null;
-            ActualFunction = null; 
-            System.err.println("Error semántico: La función " + pName + 
-                " está duplicada");
+            ActualFunction = null;
+            System.err.println("Error semantico: La funcion " + pName + " esta duplicada");
             error_semantic_count++;
         }
         else{
@@ -48,17 +73,25 @@ parser code {:
         }
     }
 
-    public LineaTabla createVar(String pTypeReturn, String pName, int pRow,
-        int pColumn, boolean pInitialized){
-        LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow,pColumn, pInitialized);
+    /**
+     * Crea y agrega una variable a la tabla de simbolos actual
+     * @param pTypeReturn tipo de dato
+     * @param pName nombre de la variable
+     * @param pRow fila de declaracion
+     * @param pColumn columna de declaracion
+     * @param pInitialized indica si esta inicializada
+     * @return objeto LineaTabla si fue agregado correctamente, null si ya existe
+     */
+    public LineaTabla createVar(String pTypeReturn, String pName, int pRow, int pColumn, boolean pInitialized){
+        LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow, pColumn, pInitialized);
         if(!ActualTable.AgregarDato(line)){
-            System.err.println("Error semántico: La variable " + pName + 
-                " está duplicada");
+            System.err.println("Error semantico: La variable " + pName + " esta duplicada");
             return null;
         }
         return line;
     }
 
+    // Imprime todas las funciones y sus respectivas tablas de simbolos
     public void printTables(){
         System.out.println(Functions.toString() + "\n");
         Collection<TablaDeSimbolos> tables = FunctionTables.values();
@@ -67,41 +100,63 @@ parser code {:
         }
     }
 
+    /**
+     * Reporta un error semantico con o sin ubicacion
+     * @param s simbolo donde ocurrio el error (puede ser null)
+     * @param mensaje descripcion del error
+     */
     public void semantic_error(Symbol s, String mensaje) {
         if (s != null) {
-            System.err.println("Error semántico en la línea " + (s.left + 1) +
+            System.err.println("Error semantico en la linea " + (s.left + 1) +
                             ", columna " + (s.right + 1) + ": " + mensaje);
         } else {
-            System.err.println("Error semántico: " + mensaje);
+            System.err.println("Error semantico: " + mensaje);
         }
         error_semantic_count++;
     }
 
+    // Lista de instrucciones intermedias generadas por el parser
     List<InstruccionIntermedia> codigoIntermedio = new ArrayList<>();
+
+    // Contador para generar nombres unicos de temporales
     int contadorTemporales = 0;
 
+    /**
+     * Genera un nuevo nombre de temporal
+     * @return nombre del temporal generado (ej: t0, t1...)
+     */
     public String nuevoTemporal() {
         return "t" + (contadorTemporales++);
     }
 
+    /**
+     * Escribe las instrucciones intermedias en un archivo
+     * @param archivo nombre del archivo de salida
+     */
     public void escribirCodigoIntermedio(String archivo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(archivo))) {
             for (InstruccionIntermedia inst : codigoIntermedio) {
                 pw.println(inst);
             }
         } catch (IOException e) {
-            System.err.println("No se pudo escribir el archivo de código intermedio.");
+            System.err.println("No se pudo escribir el archivo de codigo intermedio.");
         }
     }
 
+    // Contador para generar nombres unicos de etiquetas
     private int contadorEtiquetas = 0;
 
+    /**
+     * Genera una nueva etiqueta con un nombre base
+     * @param base prefijo de la etiqueta
+     * @return etiqueta generada (ej: et_if_0, et_else_1...)
+     */
     public String nuevaEtiqueta(String base) {
         return "et_" + base + "_" + (contadorEtiquetas++);
     }
 :}
 
-
+//Lista de terminales 
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
 terminal IF, ELIF, ELSE, WHILE, FOR, DO, BREAK;
 terminal INT, FLOAT, BOOLEAN, CHAR, STRING;
@@ -116,7 +171,7 @@ terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLE
 terminal RETURN, COMMENT_BLOCK, COMMENT_LINE, MAIN;
 terminal ID, VOID;
 
-// No terminales
+// Lista de no terminales
 non terminal programa, main_func, func_decl, func_list, param_list, param, block;
 non terminal stmt_list, stmt, var_decl, assign_stmt, var_decl_asisgn_stmt;
 non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
@@ -125,6 +180,7 @@ non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, simple_type
 non terminal func_call, arg_list, write_stmt, read_stmt, selection_stmt;
 non terminal array_decl, array_int_expr, array_int_expr_list, for_assign;
 
+// Precedencias
 precedence left EQ, NEQ, LT, LE, GT, GE;
 precedence left ADDITION, SUBTRACT;
 precedence left MULTIPLICATION, DIVISION, MODULE;
@@ -134,47 +190,67 @@ precedence left PARENTHESIS_R;
 precedence left CONJUNCTION, DISJUNCTION;
 
 start with programa;
-
-programa ::=
+// *******************************************************PROGRAMA***************************************************************************
+// Produccion principal que representa un programa completo
+// Un programa consiste en una lista de funciones
+programa ::= 
     func_list;
 
+// ******************************************************MAIN_FUNC****************************************************************************
+// Produccion para declarar la funcion principal 'main'
+// Sintaxis: void main() { ... }
 main_func ::= VOID MAIN PARENTHESIS_L PARENTHESIS_R
 {:
+    // Se crea la funcion main con tipo de retorno void
     int row = 0;
     int column = 0;
     createFunction("void", "main", row, column);
+    parser.codigoIntermedio.add(new InicioFuncionInstr("main"));
     RESULT = null;
 :}
-    block;
+    block; // El cuerpo de la funcion main
 
+// ***************************************************DECLARACION*DE*FUNCIONES*******************************************************************************
+// Produccion para la declaracion de funciones generales
+// Sintaxis: <tipo> <nombre>(<parametros>) { ... }
 func_decl ::= type:typeFunction ID:name
 {:
     if(typeFunction != null && name != null){
+        // Se obtiene el nombre y tipo de la funcion
         String nameFunction = name.toString();
         String type = typeFunction.toString();
         int row = 0;
         int column = 0;
+
+        // Se registra la funcion en la tabla global
         createFunction(type, nameFunction, row, column);
+        parser.codigoIntermedio.add(new InicioFuncionInstr(nameFunction));
         RESULT = null;
     }
 :}
     PARENTHESIS_L param_list:params PARENTHESIS_R
 {:
     if(params != null){
+        // Se registra la lista de parametros en la funcion
         String paramsFunction = params.toString();
         String nameFunction = name.toString();
         Function function = Functions.get(nameFunction);
         function.setArguments(paramsFunction);
     }
 :}
-    block;
+    block; // El cuerpo de la funcion
 
+// **************************************************LISTAS*DE*FUNCIONES******************************************************************************
+// Listas de funciones
 func_list ::=
     func_decl func_list
     | comment func_list
     | main_func
     | error ;
 
+// ***********************************************LISTA*DE*PARAMETROS*********************************************************************************
+// Produccion para la lista de parametros de una funcion
+// Puede ser una lista separada por comas o un solo parametro
 param_list ::=
     param:type COMMA param_list:typeList
 {:
@@ -191,6 +267,9 @@ param_list ::=
 :}
     | {:RESULT = null;:};
 
+// ************************************************PARAMETROS**********************************************************************************
+// Produccion que representa un parametro individual de una funcion
+// Esta compuesto por un tipo y un identificador (nombre de variable)
 param ::= type:typeVar ID:name
 {:
     if(ActualTable != null && typeVar != null && name != null){
@@ -203,6 +282,9 @@ param ::= type:typeVar ID:name
     }
 :};
 
+// ***************************************************BLOQUE*DE*CODIGO*****************************************************************************
+// Produccion que representa un bloque de codigo delimitado por llaves
+// Se crea un nuevo ambito (tabla de simbolos) al entrar al bloque
 block ::=
     OPEN_BLOCK
 {:
@@ -221,161 +303,211 @@ block ::=
     }
 :};
 
+// ************************************************LISTA*DE*SENTENCIAS********************************************************************************
+// Produccion que representa una lista de instrucciones (sentencias)
+// Puede ser una secuencia de sentencias o una sola sentencia
 stmt_list ::=
     stmt stmt_list
     | stmt;
 
-stmt ::=
-    var_decl END_LINE
-    | assign_stmt END_LINE
-    | var_decl_asisgn_stmt END_LINE
-    | control_struct END_LINE
-    | control_struct
-    | read_stmt END_LINE
-    | write_stmt END_LINE
-    | return_stmt END_LINE
-    | break_stmt END_LINE
-    | array_decl END_LINE
-    | func_call END_LINE
-    | comment
-    | error END_LINE;
+// ***********************************************SENTENCIAS***********************************************************************************
+// Produccion que representa una instruccion individual (sentencia)
+// Las instrucciones pueden ser declaraciones, asignaciones, llamadas a funciones, etc.
+stmt ::= 
+    var_decl END_LINE              // Declaracion de variable sin inicializacion
+    | assign_stmt END_LINE         // Asignacion de valor a una variable ya declarada
+    | var_decl_asisgn_stmt END_LINE // Declaracion de variable con inicializacion
+    | control_struct END_LINE      // Estructura de control (ej. if, while, for) seguida por fin de linea
+    | control_struct               // Estructura de control sin necesidad de fin de linea
+    | read_stmt END_LINE           // Instruccion de lectura
+    | write_stmt END_LINE          // Instruccion de escritura
+    | return_stmt END_LINE         // Instruccion de retorno
+    | break_stmt END_LINE          // Instruccion de ruptura (break)
+    | array_decl END_LINE          // Declaracion de arreglo
+    | func_call END_LINE           // Llamada a una funcion
+    | comment                      // Comentario
+    | error END_LINE;              // Captura de errores sintacticos con fin de linea
 
-var_decl ::=
+// ***************************************DECLARACION*DE*VARIABLE*****************************************************************************************
+// Produccion que representa la declaracion de una variable sin inicializar.
+// Sintaxis esperada: tipo nombre_variable
+var_decl ::= 
     type:typeVar ID:name
 {:
+    // Verifica que exista una tabla de simbolos activa y que los datos no sean nulos
     if(ActualTable != null && typeVar != null && name != null){
-        String nameFunction = typeVar.toString();
-        String type = name.toString();
-        int row = 0;
-        int column = 0;
+        String nameFunction = typeVar.toString(); // Se obtiene el tipo de la variable
+        String type = name.toString();           // Se obtiene el nombre de la variable
+        int row = 0;                             // Se asigna la fila (puede mejorarse luego)
+        int column = 0;                          // Se asigna la columna (puede mejorarse luego)
+        
+        // Crea la variable en la tabla actual sin marcarla como inicializada
         RESULT = createVar(nameFunction, type, row, column, false);
     }
 :};
 
+// **************************************Declaracion*DE*ARRAYS******************************************************************************************
+// Produccion que representa la declaracion de arreglos unidimensionales o bidimensionales.
+// Sintaxis esperada:
+//   tipo nombre_arreglo[expresion]
+//   tipo nombre_arreglo[expresion][expresion]
+// Tambien permite declarar usando el no terminal matrix_type, que encapsula la declaracion completa.
+
 array_decl ::= 
     type ID LBRACKET expr RBRACKET
+    // Declaracion de arreglo unidimensional con su tamaño definido por una expresion
     | type ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET
+    // Declaracion de arreglo bidimensional con ambas dimensiones definidas por expresiones
     | matrix_type;
+    // Alternativamente, se permite usar una forma preprocesada a traves de matrix_type
+
+// *******************************************ASIGNACIONES***************************************************************************************
+// Produccion que representa las distintas formas de asignacion
 
 assign_stmt ::= 
+
+    // Asignacion de una expresion a una variable
+    // Ejemplo: x = 5 + 3
     ID:name ASSIGN expr:type 
-{:
-    if (ActualTable != null && name != null && type != null) {
-        String id = name.toString();
-        String[] tipoValor = (String[]) type; // tipo y valor temporal
-        String tipoExpr = tipoValor[0];
-        String valorExpr = tipoValor[1];
+    {:
+        if (ActualTable != null && name != null && type != null) {
+            String id = name.toString();
+            String[] tipoValor = (String[]) type; // tipo y valor temporal
+            String tipoExpr = tipoValor[0];
+            String valorExpr = tipoValor[1];
 
-        LineaTabla line = ActualTable.BuscarDato(id);
-        if (line == null || !ActualTable.setInicializacionDato(id, true)) {
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe.");
-        } else if (!tipoExpr.equals(line.getTipo())) {
-            error_semantic_count++;
-            System.err.println("Error semántico: no se puede asignar el tipo " +
-                tipoExpr + " a la variable " + id + " de tipo " + line.getTipo() + ".");
-        } else {
-            parser.codigoIntermedio.add(new AsignacionInstr(id, valorExpr));
-            if (ActualTable != null) {
-                ActualTable.agregarInstruccion(new AsignacionInstr(id, valorExpr));
+            LineaTabla line = ActualTable.BuscarDato(id);
+            if (line == null || !ActualTable.setInicializacionDato(id, true)) {
+                error_semantic_count++;
+                System.err.println("El identificador " + id + " no existe.");
+            } else if (!tipoExpr.equals(line.getTipo())) {
+                error_semantic_count++;
+                System.err.println("Error semantico: no se puede asignar el tipo " +
+                    tipoExpr + " a la variable " + id + " de tipo " + line.getTipo() + ".");
+            } else {
+                parser.codigoIntermedio.add(new AsignacionInstr(id, valorExpr));
+                if (ActualTable != null) {
+                    ActualTable.agregarInstruccion(new AsignacionInstr(id, valorExpr));
+                }
             }
         }
-    }
-:}
-| ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
-{:
-    // TODO: Código intermedio para asignación a matriz 2D
-    System.err.println("⚠ Asignación a matriz 2D aún no implementada.");
-:}
-| ID LBRACKET expr RBRACKET ASSIGN expr
-{:
-    // TODO: Código intermedio para asignación a matriz 1D
-    System.err.println(" Asignación a matriz 1D aún no implementada.");
-:}
-| ADDITION_ONE ID:name 
-{:
-    if (ActualTable != null && name != null) {
-        String id = name.toString();
-        LineaTabla line = ActualTable.BuscarDato(id);
-        if (line == null) {
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe.");
-        } else if (!line.getTipo().equals("int")) {
-            error_semantic_count++;
-            System.err.println("El operador ++ solo se permite sobre enteros.");
-        } else {
-            String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
-            parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
-            if (ActualTable != null) {
-                ActualTable.agregarInstruccion(new OperacionInstr(temp, id, "+", "1"));
-                ActualTable.agregarInstruccion(new AsignacionInstr(id, temp));
+    :}
+
+    // Asignacion a una posicion especifica en una matriz bidimensional
+    // Ejemplo: m[1][2] = 9;
+    | ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr
+    {:
+        // TODO: Codigo intermedio para asignacion a matriz 2D
+        System.err.println("⚠ Asignacion a matriz 2D aun no implementada.");
+    :}
+
+    // Asignacion a una posicion especifica en un arreglo unidimensional
+    // Ejemplo: v[3] = 7;
+    | ID LBRACKET expr RBRACKET ASSIGN expr
+    {:
+        // TODO: Codigo intermedio para asignacion a matriz 1D
+        System.err.println("Asignacion a matriz 1D aun no implementada.");
+    :}
+
+    // Operador de incremento (preincremento)
+    // Ejemplo: ++x;
+    | ADDITION_ONE ID:name 
+    {:
+        if (ActualTable != null && name != null) {
+            String id = name.toString();
+            LineaTabla line = ActualTable.BuscarDato(id);
+            if (line == null) {
+                error_semantic_count++;
+                System.err.println("El identificador " + id + " no existe.");
+            } else if (!line.getTipo().equals("int")) {
+                error_semantic_count++;
+                System.err.println("El operador ++ solo se permite sobre enteros.");
+            } else {
+                String temp = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
+                parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+                if (ActualTable != null) {
+                    ActualTable.agregarInstruccion(new OperacionInstr(temp, id, "+", "1"));
+                    ActualTable.agregarInstruccion(new AsignacionInstr(id, temp));
+                }
             }
         }
-    }
-:}
+    :}
 
-| SUBTRACT_ONE ID:name 
-{:
-    if (ActualTable != null && name != null) {
-        String id = name.toString();
-        LineaTabla line = ActualTable.BuscarDato(id);
-        if (line == null) {
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe.");
-        } else if (!line.getTipo().equals("int")) {
-            error_semantic_count++;
-            System.err.println("El operador -- solo se permite sobre enteros.");
-        } else if (!line.getEstaInicializado()) {
-            error_semantic_count++;
-            System.err.println("No se ha inicializado el identificador " + id);
-        } else {
-            String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new OperacionInstr(temp, id, "-", "1"));
-            parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+    // Operador de decremento (predecremento)
+    // Ejemplo: --x;
+    | SUBTRACT_ONE ID:name 
+    {:
+        if (ActualTable != null && name != null) {
+            String id = name.toString();
+            LineaTabla line = ActualTable.BuscarDato(id);
+            if (line == null) {
+                error_semantic_count++;
+                System.err.println("El identificador " + id + " no existe.");
+            } else if (!line.getTipo().equals("int")) {
+                error_semantic_count++;
+                System.err.println("El operador -- solo se permite sobre enteros.");
+            } else if (!line.getEstaInicializado()) {
+                error_semantic_count++;
+                System.err.println("No se ha inicializado el identificador " + id);
+            } else {
+                String temp = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new OperacionInstr(temp, id, "-", "1"));
+                parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+            }
         }
-    }
-:};
+    :};
 
 
+// ******************************DECLARACION*CON*ASIGNACION**************************************************************************************************
+// Produccion que representa una declaracion de variable seguida de una asignacion
+// Ejemplos: 
+//    int x = 5;
+//    int z = x + 2;
+
+// Caso 1: Declaracion de variable simple con asignacion
 var_decl_asisgn_stmt ::= var_decl:var ASSIGN expr:type
 {:
-    if(ActualTable != null && var != null && type != null){
+    if (ActualTable != null && var != null && type != null) {
         String[] tipoValor = (String[]) type; // tipo y valor temporal
-        String tipoExpr = tipoValor[0];
-        String valorExpr = tipoValor[1];
+        String tipoExpr = tipoValor[0];       // tipo de la expresion
+        String valorExpr = tipoValor[1];      // resultado o temporal de la expresion
 
-        LineaTabla line = (LineaTabla) var;
-        if(line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)){
+        LineaTabla line = (LineaTabla) var;   // linea correspondiente a la variable declarada
+        if (line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)) {
             error_semantic_count++;
             System.err.println("El identificador " + line.getNombre() + " no existe");
-        }
-        else if(!tipoExpr.equals(line.getTipo())){
+        } 
+        else if (!tipoExpr.equals(line.getTipo())) {
             error_semantic_count++;
-            System.err.println("Error semántico: no se puede asignar el tipo " +
+            System.err.println("Error semantico: no se puede asignar el tipo " +
                 tipoExpr + " a la variable " + line.getNombre() + " con tipo " +
                 line.getTipo() + ".");
-        }
+        } 
         else {
-            //Código intermedio para declaración con asignación
+            // Codigo intermedio para declaracion con asignacion
             parser.codigoIntermedio.add(new DeclAsigInstr(line.getTipo(), line.getNombre(), valorExpr));
         }
     }
 :}
+
+// Caso 2: Declaracion de arreglo (1D o 2D) con asignacion (no implementado aun)
+// Ejemplo: int matriz[2][2] = expr;
 | array_decl:array ASSIGN expr
 {:
-    if(ActualTable != null && array != null){
+    if (ActualTable != null && array != null) {
         LineaTabla varLine = (LineaTabla) array;
-        if(varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)){
+        if (varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)) {
             System.err.println(varLine.getNombre() + " no existe en la linea " +
                 varLine.getFila() + " y columna " + varLine.getColumna());
             error_semantic_count++;
         }
     }
-    RESULT = null;
+    RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
 :};
 
 
+// **********************************************************************************************************************************
 expr ::=
     func_call:type
 {:
@@ -482,17 +614,25 @@ expr ::=
     }
 :};
 
+// **********************************************************************************************************************************
 array_int_expr ::=
     BRACKET array_int_expr_list BRACKET
     | BRACKET BRACKET;
 
+// **********************************************************************************************************************************
 array_int_expr_list ::=
     INT_LITERAL COMMA array_int_expr_list
     | INT_LITERAL;
 
+// ******************************EXPRESIONES*ARITMETICAS***************************************************************************************************
+// Produccion para operaciones aritmeticas: suma, resta, multiplicacion, division, modulo y negacion unaria
+
 arith_expr ::=
+
+    // Suma: expr + expr
     expr:e1 ADDITION expr:e2
 {:
+    // Se extraen tipos y valores de ambas expresiones
     String[] v1 = (String[]) e1;
     String[] v2 = (String[]) e2;
     if(ActualTable != null && e1 != null && e2 != null){
@@ -517,6 +657,8 @@ arith_expr ::=
         }
     }
 :}
+
+    // Resta: expr - expr
 | expr:e1 SUBTRACT expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -543,6 +685,8 @@ arith_expr ::=
         }
     }
 :}
+
+    // Multiplicacion: expr * expr
 | expr:e1 MULTIPLICATION expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -595,6 +739,8 @@ arith_expr ::=
         }
     }
 :}
+
+    // Division: expr / expr
 | expr:e1 DIVISION expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -610,17 +756,18 @@ arith_expr ::=
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "/", val2));
 
-            RESULT = new String[] {
-                "float", // División siempre se trata como flotante
-                temp
-            };
-        } else {
-            Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-            parser.semantic_error(operador, "no se puede dividir " + tipo1 + " con " + tipo2);
-            RESULT = new String[] { "error", "" };
-        }
+        RESULT = new String[] {
+            "float", // La division siempre se interpreta como flotante
+            temp
+        };
+    } else {
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "no se puede dividir " + tipo1 + " con " + tipo2);
+        RESULT = new String[] { "error", "" };
     }
 :}
+
+    // Modulo: expr % expr (solo para enteros)
 | expr:e1 MODULE expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -635,14 +782,15 @@ arith_expr ::=
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "%", val2));
 
-            RESULT = new String[] { "int", temp };
-        } else {
-            Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-            parser.semantic_error(operador, "el operador módulo sólo se permite entre enteros");
-            RESULT = new String[] { "error", "" };
-        }
+        RESULT = new String[] { "int", temp };
+    } else {
+        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+        parser.semantic_error(operador, "el operador modulo solo se permite entre enteros");
+        RESULT = new String[] { "error", "" };
     }
 :}
+
+    // Negacion unaria: -expr
 | SUBTRACT expr:e
 {:
     String[] v = (String[]) e;
@@ -662,7 +810,7 @@ arith_expr ::=
     }
 :};
 
-
+// **********************************************************************************************************************************
 rel_expr ::= expr:e1 LT expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -784,6 +932,7 @@ rel_expr ::= expr:e1 LT expr:e2
 :};
 
 
+// **********************************************************************************************************************************
 logic_expr ::= expr:e1 CONJUNCTION expr:e2
 {:
     String[] v1 = (String[]) e1;
@@ -829,6 +978,7 @@ logic_expr ::= expr:e1 CONJUNCTION expr:e2
 :};
 
 
+// **********************************************************************************************************************************
 for_assign ::=
     assign_stmt
     | var_decl_asisgn_stmt;
@@ -854,6 +1004,7 @@ literal ::= INT_LITERAL:n
     RESULT = new String[] { "char", n.toString() };
 :};
 
+// **********************************************************************************************************************************
 control_struct ::=
     if_elif_else_stmt
     | if_elif_stmt
@@ -863,25 +1014,50 @@ control_struct ::=
     | do_while_stmt
     | for_stmt;
 
-if_elif_else_stmt ::=
-    IF PARENTHESIS_L expr:type PARENTHESIS_R block:tableIf
-    elif_blocks ELSE block:tableElse
+// **********************************************************************************************************************************
+if_elif_else_stmt ::= 
+    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
+    elif_blocks:elifList ELSE block:blockElse
 {:
-    if(ActualTable != null && tableElse != null && type != null && tableIf != null){
-        String typeExpr = tableIf.toString();
-        if(!typeExpr.equals("boolean")){
-            System.err.println("Error semántico: if necesita una " +
-                "expresion de tipo booleano para funcionar. En cambio, se " +
-                "una expresion de tipo " + typeExpr + ".");
-            error_semantic_count++;
+    if (cond != null) {
+        String[] condicionIf = (String[]) cond;
+        String tempCondIf = condicionIf[1];
+
+        String etiquetaNext = parser.nuevaEtiqueta("elif_next");
+        String etiquetaFin = parser.nuevaEtiqueta("if_elif_else_fin");
+
+        parser.codigoIntermedio.add(new IfFalseInstr(tempCondIf, etiquetaNext));
+
+        if (blockIf instanceof TablaDeSimbolos tablaIf) {
+            tablaIf.setNombre("if");
+            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
         }
-        TablaDeSimbolos tableAuxIf = (TablaDeSimbolos) tableIf;
-        tableAuxIf.setNombre("elif");
-        TablaDeSimbolos tableAuxElse = (TablaDeSimbolos) tableElse;
-        tableAuxElse.setNombre("else");
+
+        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaNext));
+
+        List<TablaDeSimbolos> elifs = (List<TablaDeSimbolos>) elifList;
+        for (TablaDeSimbolos elif : elifs) {
+            for (InstruccionIntermedia inst : elif.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
+        }
+
+        if (blockElse instanceof TablaDeSimbolos tablaElse) {
+            tablaElse.setNombre("else");
+            for (InstruccionIntermedia inst : tablaElse.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
+        }
+
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
     }
 :};
 
+
+// **********************************************************************************************************************************
 if_else_stmt ::= 
     IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
     ELSE block:blockElse
@@ -922,23 +1098,46 @@ if_else_stmt ::=
 :};
 
 
+// **********************************************************************************************************************************
 if_elif_stmt ::= 
-    IF PARENTHESIS_L expr:type PARENTHESIS_R block:table
-    elif_blocks
+    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
+    elif_blocks:elifList
 {:
-    if(ActualTable != null && table != null && type != null){
-        String typeExpr = type.toString();
-        if(!typeExpr.equals("boolean")){
-            System.err.println("Error semántico: if necesita una " +
-                "expresion de tipo booleano para funcionar. En cambio, se " +
-                "una expresion de tipo " + typeExpr + ".");
-            error_semantic_count++;
+    if (cond != null) {
+        String[] condicionIf = (String[]) cond;
+        String tempCondIf = condicionIf[1];
+
+        String etiquetaNext = parser.nuevaEtiqueta("elif_next");
+        String etiquetaFin = parser.nuevaEtiqueta("if_elif_fin");
+
+        // Evaluar condición IF
+        parser.codigoIntermedio.add(new IfFalseInstr(tempCondIf, etiquetaNext));
+
+        // Bloque IF
+        if (blockIf instanceof TablaDeSimbolos tablaIf) {
+            tablaIf.setNombre("if");
+            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
         }
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
-        tableAux.setNombre("if");
+
+        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaNext));
+
+        // Agrega bloques elif
+        List<TablaDeSimbolos> elifs = (List<TablaDeSimbolos>) elifList;
+        for (TablaDeSimbolos elif : elifs) {
+            for (InstruccionIntermedia inst : elif.getInstrucciones()) {
+                parser.codigoIntermedio.add(inst);
+            }
+        }
+
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
     }
 :};
 
+
+// **********************************************************************************************************************************
 selection_stmt ::= IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK
 {:
     if(ActualTable != null && cond != null && ifbody != null){
@@ -971,6 +1170,7 @@ selection_stmt ::= IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK
 :};
 
 
+// **********************************************************************************************************************************
 if_stmt ::= 
     IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
 {:
@@ -994,27 +1194,42 @@ if_stmt ::=
 :};
 
 
-
-elif_blocks ::=
-    elif_block elif_blocks
-    | elif_block;
-
-elif_block ::=
-    ELIF PARENTHESIS_L expr:type PARENTHESIS_R block:table
+// ***********************************BLOQUES*ELIF**********************************************************************************************
+elif_blocks ::= 
+    elif_block:eb elif_blocks:rest
 {:
-    if(ActualTable != null && table != null && type != null){
-        String typeExpr = type.toString();
-        if(!typeExpr.equals("boolean")){
-            System.err.println("Error semántico: elif necesita una " +
-                "expresion de tipo booleano para funcionar. En cambio, se " +
-                "una expresion de tipo " + typeExpr + ".");
-            error_semantic_count++;
-        }
-        TablaDeSimbolos tableAux = (TablaDeSimbolos) table;
-        tableAux.setNombre("elif");
-    }
+    List<TablaDeSimbolos> lista = new ArrayList<>();
+    lista.add((TablaDeSimbolos) eb);
+    lista.addAll((List<TablaDeSimbolos>) rest);
+    RESULT = lista;
+:}
+| elif_block:eb
+{:
+    List<TablaDeSimbolos> lista = new ArrayList<>();
+    lista.add((TablaDeSimbolos) eb);
+    RESULT = lista;
 :};
 
+// **********************************************************************************************************************************
+elif_block ::= 
+    ELIF PARENTHESIS_L expr:cond PARENTHESIS_R block:bloque
+{:
+    String[] condicion = (String[]) cond;
+    String tempCond = condicion[1];
+    String etiquetaSiguiente = parser.nuevaEtiqueta("elif_next");
+    String etiquetaSalida = parser.nuevaEtiqueta("elif_fin");
+
+    TablaDeSimbolos tabla = (TablaDeSimbolos) bloque;
+    tabla.setNombre("elif");
+
+    tabla.getInstrucciones().add(0, new IfFalseInstr(tempCond, etiquetaSiguiente));
+    tabla.getInstrucciones().add(new GotoInstr(etiquetaSalida));
+    tabla.getInstrucciones().add(new EtiquetaInstr(etiquetaSiguiente));
+
+    RESULT = tabla;
+:};
+
+// **********************************************************************************************************************************
 do_while_stmt ::=
     DO
 {:
@@ -1038,6 +1253,7 @@ do_while_stmt ::=
     }
 :};
 
+// **********************************************************************************************************************************
 for_stmt ::=
     FOR
 {:
@@ -1070,6 +1286,12 @@ for_stmt ::=
     }
 :};
 
+// **********************************************************************************************************************************
+/**
+ * Produccion para la sentencia de retorno.
+ * Valida que el tipo de retorno coincida con el tipo declarado de la funcion
+ * y genera la instruccion intermedia correspondiente.
+ */
 return_stmt ::= RETURN expr:type
 {:
     if(ActualTable != null && type != null){
@@ -1081,9 +1303,15 @@ return_stmt ::= RETURN expr:type
                 ActualFunction.getNombre() + ".");
             error_semantic_count++;
         }
+
+        // Agregar instruccion intermedia para return
+        parser.codigoIntermedio.add(new ReturnInstr(valorReturn));
+        ActualTable.agregarInstruccion(new ReturnInstr(valorReturn));
     }
 :};
 
+
+// **********************************************************************************************************************************
 break_stmt ::= BREAK
 {:
     if(ActualTable != null){
@@ -1102,10 +1330,12 @@ break_stmt ::= BREAK
     }
 :};
 
+// **********************************************************************************************************************************
 type ::= 
     simple_type:typeString {: RESULT = typeString.toString(); :}
     | matrix_type:typeString {: RESULT = typeString.toString(); :};
 
+// **********************************************************************************************************************************
 simple_type ::=
     INT {:RESULT = "int";:}
     | FLOAT {:RESULT = "float";:}
@@ -1113,6 +1343,7 @@ simple_type ::=
     | CHAR {:RESULT = "char";:}
     | STRING {:RESULT = "string";:};
 
+// **********************************************************************************************************************************
 matrix_type ::=
     INT_MATRIX {:RESULT = "intMatrix";:}
     | FLOAT_MATRIX {:RESULT = "floatMatrix";:}
@@ -1120,58 +1351,78 @@ matrix_type ::=
     | CHAR_MATRIX {:RESULT = "charMatrix";:}
     | BOOLEAN_MATRIX {:RESULT = "booleanMatrix";:};
 
+// **********************************************************************************************************************************
 comment ::= 
     COMMENT_BLOCK
     | COMMENT_LINE;
 
+// **********************************************************************************************************************************
+/**
+ * Produccion para la llamada a una funcion con argumentos.
+ * Se valida si la funcion existe, si los tipos de argumentos coinciden
+ * y se devuelve su tipo de retorno si es correcta.
+ */
 func_call ::=
     ID:name PARENTHESIS_L arg_list:args PARENTHESIS_R
 {:
-    if(ActualTable != null && args != null && name != null){
+    if (ActualTable != null && args != null && name != null) {
         String nameCall = name.toString();
         String argsCall = args.toString();
-        if(Functions.containsKey(nameCall)){
+        if (Functions.containsKey(nameCall)) {
             Function function = Functions.get(nameCall);
             String argsFunction = function.getArguments();
-            if(argsFunction.equals(argsCall)){
-                RESULT = new String[] {function.getTipo(), nameCall};
+            if (argsFunction.equals(argsCall)) {
+                RESULT = new String[]{ function.getTipo(), nameCall + "()" };
+
+                // Generar codigo intermedio para la llamada a funcion
+                parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
+                ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
+            } else {
+                System.err.println("Error semantico: La funcion " + nameCall +
+                    " tiene argumentos de tipo |" + argsFunction + "|, pero se enviaron |" +
+                    argsCall + "|.");
+                RESULT = new String[]{ "error", "" };
             }
-            else{
-                System.err.println("Error semántico: La función " + nameCall +
-                    " tiene argumentos de tipo |" + argsFunction + "|, en " +
-                    " cambio, se enviaron argumentos de tipo |" + argsCall + 
-                    "|.");
-            }
-        }
-        else{
-            System.err.println("No existe la función " + nameCall + ".");
+        } else {
+            System.err.println("Error semantico: No existe la funcion " + nameCall + ".");
+            RESULT = new String[]{ "error", "" };
         }
     }
 :}
-    | ID:name PARENTHESIS_L PARENTHESIS_R
+
+/**
+ * Produccion para la llamada a una funcion sin argumentos.
+ * Se valida la existencia de la funcion y que no espere argumentos.
+ */
+| ID:name PARENTHESIS_L PARENTHESIS_R
 {:
-    if(ActualTable != null && name != null){
+    if (ActualTable != null && name != null) {
         String nameCall = name.toString();
         String argsCall = "";
-        if(Functions.containsKey(nameCall)){
+        if (Functions.containsKey(nameCall)) {
             Function function = Functions.get(nameCall);
             String argsFunction = function.getArguments();
-            if(argsFunction.equals(argsCall)){
-                RESULT = new String[] {function.getTipo(), nameCall};
+            if (argsFunction.equals(argsCall)) {
+                RESULT = new String[]{ function.getTipo(), nameCall + "()" };
+
+                // Generar codigo intermedio para la llamada a funcion
+                parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
+                ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
+            } else {
+                System.err.println("Error semantico: La funcion " + nameCall +
+                    " tiene argumentos de tipo |" + argsFunction + "|, pero se enviaron |" +
+                    argsCall + "|.");
+                RESULT = new String[]{ "error", "" };
             }
-            else{
-                System.err.println("Error semántico: La función " + nameCall +
-                    " tiene argumentos de tipo |" + argsFunction + "|, en " +
-                    " cambio, se enviaron argumentos de tipo |" + argsCall + 
-                    "|.");
-            }
-        }
-        else{
-            System.err.println("No existe la función " + nameCall + ".");
+        } else {
+            System.err.println("Error semantico: No existe la funcion " + nameCall + ".");
+            RESULT = new String[]{ "error", "" };
         }
     }
 :};
 
+
+// **********************************************************************************************************************************
 arg_list ::= expr:type COMMA arg_list:types
 {:
     if(ActualTable != null && type != null && types != null){
@@ -1189,6 +1440,7 @@ arg_list ::= expr:type COMMA arg_list:types
     }
 :};
 
+// **********************************************************************************************************************************
 write_stmt ::= 
     WRITE_INT INT_LITERAL 
     | WRITE_INT ID:name
@@ -1291,6 +1543,7 @@ write_stmt ::=
     }
 :};
 
+// **********************************************************************************************************************************
 read_stmt ::= 
     READ_INT ID:name
 {:
