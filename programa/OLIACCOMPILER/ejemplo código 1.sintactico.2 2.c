@@ -1,40 +1,50 @@
-int funcion1ʃ char nombre, string param2 ʅ  \ 
-	int a = 2?
-	int b = 3?
-	int d = a + b?
-	return d?
+float calcularPromedioʃ int suma, int cantidad ʅ \
+	float promedio = suma // cantidad?
+	return promedio?
 /
 
-char funcion2ʃ boolean tres ʅ \
-	int contador = 1?
-	int tamano = 21?
-	int alerta = funcion1ʃ'h', "andrew"ʅ?
-	if ʃʃ23 + contadorʅ == ʃʃcontador + tamanoʅ ** ʃtamano + funcion1ʃ'h', "andrew"ʅ ʅʅʅ\
-		string saludo = "Hola"?
-		do\
-			++contador?
-			string nombre = "Andrew"?
-			break?
-		/whileʃalerta < 0.6ʅ?
-		for ʃint cantidad = 0?cantidad<=10?cantidad = cantidad + 1ʅ\
-			ifʃsolʅ\
-				ifʃsolʅ\
-					ifʃsolʅ\
-						break?
-					/
-				/
-			/
-		/
+string clasificarNotaʃ float nota ʅ \
+	ifʃnota >= 90ʅ \
+		return "Excelente"?
 	/
-	do\
-		string hola = "Andrew"?
-		int sopa = 3?
-		char letra = 'a'?
-	/whileʃalerta < 0.6ʅ?
-	funcion1ʃ'p', "Hola"ʅ?
-	return 'p'?
+	elifʃnota >= 70ʅ \
+		return "Aprobado"?
+	/
+	else \
+		return "Reprobado"?
+	/
 /
 
-void main ʃ ʅ  \ 
-	string hola = "Hola"?
+string mostrarResultadosʃ int suma, int cantidad ʅ \
+	float promedio = calcularPromedioʃsuma, cantidadʅ?
+	string clasificacion = clasificarNotaʃpromedioʅ?
+	writeString -> "Promedio:"?
+	writeFloat -> promedio?
+	writeString -> "Clasificación:"?
+	writeString -> clasificacion?
+/
+
+void mainʃʅ \
+	int suma = 0?
+	int cantidad = 3?
+	int i = 0?
+	writeString -> "Ingrese 3 notas enteras:"?
+	forʃi = 0? i < cantidad? ++iʅ \
+		int nota = readIntʃʅ?
+		suma = suma + nota?
+	/
+	mostrarResultadosʃsuma, cantidadʅ?
+
+	do \
+		writeString -> "Ingrese una nota decimal para clasificar:"?
+		float notaDecimal = readFloatʃʅ?
+		string clasificacion = clasificarNotaʃnotaDecimalʅ?
+		writeString -> "Clasificación:"?
+		writeString -> clasificacion?
+		writeString -> "¿Desea ingresar otra nota? (1 para sí, 0 para no):"?
+		int continuar = readIntʃʅ?
+		ifʃcontinuar == 0ʅ \
+			break?
+		/
+	/whileʃtrueʅ?
 /

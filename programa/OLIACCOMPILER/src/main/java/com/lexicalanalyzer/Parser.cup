@@ -29,7 +29,9 @@ parser code {:
     private Function ActualFunction = null;
 
     //Pila de las instrucciones iterables que se han creado
-    private List<EtiquetaIterador> PilaIteradores = new ArrayList<>();
+    private List<EtiquetaEstructura> PilaIteradores = new ArrayList<>();
+
+    private List<EtiquetaEstructura> PilaControl = new ArrayList<>();
 
     /**
      * Maneja errores sintacticos encontrados por el parser
@@ -41,6 +43,10 @@ parser code {:
             ", columna " + (s.right + 1) + ": " + s.value);
         }
         error_count++;
+    }
+
+    private int currentLine(){
+        return ((MiLexer)super.getScanner()).getLine();
     }
 
     /**
@@ -311,7 +317,7 @@ block ::=
 // Puede ser una secuencia de sentencias o una sola sentencia
 stmt_list ::=
     stmt stmt_list
-    | stmt;
+    | ;
 
 // ***********************************************SENTENCIAS***********************************************************************************
 // Produccion que representa una instruccion individual (sentencia)
@@ -1022,7 +1028,7 @@ if_elif_else_stmt ::=
         String etiquedaInicio = nuevaEtiqueta("if_elif_else_inicio");
         String etiquedaIntermedia = nuevaEtiqueta("if_elif_else_intermedio");
         String etiquetaFin = nuevaEtiqueta("if_elif_else_final");
-        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+        PilaControl.add(new EtiquetaEstructura(etiquedaInicio,
             etiquedaIntermedia, etiquetaFin));
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
     }
@@ -1030,9 +1036,9 @@ if_elif_else_stmt ::=
     if_block elif_blocks else_block
 {:
     if(ActualTable != null){
-        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura iterador = PilaControl.get(PilaControl.size()-1);
         parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
-        PilaIteradores.removeLast();
+        PilaControl.removeLast();
     }
 :};
 
@@ -1045,7 +1051,7 @@ if_block ::=
             String etiquedaInicio = nuevaEtiqueta("if_inicio");
             String etiquedaIntermedia = nuevaEtiqueta("if_intermedio");
             String etiquetaFin = nuevaEtiqueta("if_final");
-            PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+            PilaControl.add(new EtiquetaEstructura(etiquedaInicio,
                 etiquedaIntermedia, etiquetaFin));
             parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
             parser.codigoIntermedio.add(new IfGotoInstr(condicion[1], etiquedaIntermedia));
@@ -1064,8 +1070,8 @@ if_block ::=
     if(ActualTable != null && cond != null && blockData != null){
         TablaDeSimbolos table = (TablaDeSimbolos) blockData;
         table.setNombre("if");
-        EtiquetaIterador estructura = PilaIteradores.removeLast();
-        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura estructura = PilaControl.removeLast();
+        EtiquetaEstructura estructuraPadre = PilaControl.get(PilaControl.size()-1);
         parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
         parser.codigoIntermedio.add(new EtiquetaInstr(estructura.getEtiquetaFinal()));
     }
@@ -1086,7 +1092,7 @@ elif_block ::=
             String etiquedaInicio = nuevaEtiqueta("elif_inicio");
             String etiquedaIntermedia = nuevaEtiqueta("elif_intermedio");
             String etiquetaFin = nuevaEtiqueta("elif_final");
-            PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+            PilaControl.add(new EtiquetaEstructura(etiquedaInicio,
                 etiquedaIntermedia, etiquetaFin));
             parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
             parser.codigoIntermedio.add(new IfGotoInstr(condicion[1], etiquedaIntermedia));
@@ -1105,8 +1111,8 @@ elif_block ::=
     if(ActualTable != null && cond != null && blockData != null){
         TablaDeSimbolos table = (TablaDeSimbolos) blockData;
         table.setNombre("elif");
-        EtiquetaIterador estructura = PilaIteradores.removeLast();
-        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura estructura = PilaControl.removeLast();
+        EtiquetaEstructura estructuraPadre = PilaControl.get(PilaControl.size()-1);
         parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
         parser.codigoIntermedio.add(new EtiquetaInstr(estructura.getEtiquetaFinal()));
     }
@@ -1118,7 +1124,7 @@ else_block ::=
     if(ActualTable != null && blockData != null){
         TablaDeSimbolos table = (TablaDeSimbolos) blockData;
         table.setNombre("else");
-        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura estructuraPadre = PilaControl.get(PilaControl.size()-1);
         parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
     }
 :}
@@ -1137,7 +1143,7 @@ do_while_stmt ::=
         String etiquetaFin = nuevaEtiqueta("do-while_final");
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
-        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
+        PilaIteradores.add(new EtiquetaEstructura(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
     }
 :}
     block WHILE PARENTHESIS_L expr:type PARENTHESIS_R
@@ -1152,7 +1158,7 @@ do_while_stmt ::=
             error_semantic_count++;
         }
         else{
-            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
             parser.codigoIntermedio.add(new IfFalseInstr(typeExpr[1], iterador.getEtiquetaFinal()));
             parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaIntermedio()));
             parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
@@ -1173,13 +1179,13 @@ for_stmt ::=
         String etiquedaIntermedia = nuevaEtiqueta("for_intermedio");
         String etiquetaFin = nuevaEtiqueta("for_final");
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
-        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
+        PilaIteradores.add(new EtiquetaEstructura(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
     }
 :}
     PARENTHESIS_L for_assign END_LINE
 {:
     if(ActualTable != null){
-        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
         parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaIntermedio()));
     }
 :}
@@ -1187,7 +1193,7 @@ for_stmt ::=
 {:
     if(ActualTable != null && type != null){
         String[] typeAux = (String[]) type;
-        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
         parser.codigoIntermedio.add(new IfFalseInstr(typeAux[1], iterador.getEtiquetaFinal()));
     }
 :}
@@ -1203,7 +1209,7 @@ for_stmt ::=
             error_semantic_count++;
         }
         else{
-            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
             parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaIntermedio()));
             parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
             PilaIteradores.removeLast();
@@ -1221,7 +1227,7 @@ return_stmt ::= RETURN expr:type
 {:
     if(ActualTable != null && type != null){
         String[] typeReturn = (String[]) type;
-        String valorReturn = (String) typeReturn[1];
+        String valorReturn = typeReturn[1];
         if(!typeReturn[0].equals(ActualFunction.getTipo())){
             System.err.println("Error semántico: El valor retornado " +
                 typeReturn[0] + " no corresponde con el tipo de retorno " +
@@ -1254,7 +1260,7 @@ break_stmt ::= BREAK
             error_semantic_count++;
         }
         else{
-            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
             parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaFinal()));
         }
     }
@@ -1375,8 +1381,8 @@ write_stmt ::=
     WRITE_INT INT_LITERAL:data
 {:
     if(ActualTable != null && data != null){
-        String[] dataAux = (String[]) data;
-        parser.codigoIntermedio.add(new OutputInstr("WRITE_INT", nuevoTemporal(), dataAux[1]));
+        String dataAux = data.toString();
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_INT", nuevoTemporal(), dataAux));
     }
 :}
     | WRITE_INT ID:name
@@ -1407,8 +1413,8 @@ write_stmt ::=
     | WRITE_FLOAT FLOAT_LITERAL:data
 {:
     if(ActualTable != null && data != null){
-        String[] dataAux = (String[]) data;
-        parser.codigoIntermedio.add(new OutputInstr("WRITE_FLOAT", nuevoTemporal(), dataAux[1]));
+        String dataAux = data.toString();
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_FLOAT", nuevoTemporal(), dataAux));
     }
 :}
     | WRITE_FLOAT ID:name
@@ -1439,8 +1445,8 @@ write_stmt ::=
     | WRITE_STRING STRING_LITERAL:data
 {:
     if(ActualTable != null && data != null){
-        String[] dataAux = (String[]) data;
-        parser.codigoIntermedio.add(new OutputInstr("WRITE_STRING", nuevoTemporal(), dataAux[1]));
+        String dataAux = data.toString();
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_STRING", nuevoTemporal(), dataAux));
     }
 :}
     | WRITE_STRING ID:name
@@ -1471,8 +1477,8 @@ write_stmt ::=
     | WRITE_BOOLEAN BOOLEAN_LITERAL:data
 {:
     if(ActualTable != null && data != null){
-        String[] dataAux = (String[]) data;
-        parser.codigoIntermedio.add(new OutputInstr("WRITE_BOOLEAN", nuevoTemporal(), dataAux[1]));
+        String dataAux = data.toString();
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_BOOLEAN", nuevoTemporal(), dataAux));
     }
 :}
     | WRITE_BOOLEAN ID:name

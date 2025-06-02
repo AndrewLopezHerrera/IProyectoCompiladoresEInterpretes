@@ -15,6 +15,7 @@ import com.lexicalanalyzer.sym.*;
 %{
   // Este es el código Java que se incluirá al principio de la clase generada.
   	private int contador = 0;  // Variable para contar identificadores
+        private int line = 1;
 	
 	private TablaDeSimbolos tablaSimbolos;
 
@@ -24,6 +25,16 @@ import com.lexicalanalyzer.sym.*;
 
 	private Symbol symbol(int type, int line, int column, Object value) {
             return new Symbol(type, line, column, value);
+        }
+        
+        // Método público para que el parser pueda consultarlo
+        public int getLine() {
+          return line;
+        }
+
+        // Cada vez que veamos '\n' llamamos a este método
+        private void newline() {
+          line++;
         }
 
 %}
@@ -39,7 +50,8 @@ boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
 ID = [_A-Za-z][_A-Za-z0-9]*
-space  = [ \t\r\n]+
+space  = [ \t]+
+line = [\r\n]
 
 /* Arreglos */
 bracket = "|"
@@ -119,6 +131,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 /* Reglas léxicas y acciones (acciones de Java) */
 
 {space}                     { /* Ignorar espacios y saltos de línea */ }
+{line}                      { for (char c : yytext().toCharArray()) if (c == '\n') newline(); }
 
 {int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
 

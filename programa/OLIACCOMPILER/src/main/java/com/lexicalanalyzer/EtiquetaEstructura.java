@@ -1,10 +1,10 @@
 package com.lexicalanalyzer;
 
-public class EtiquetaIterador {
+public class EtiquetaEstructura {
     private String EtiquetaInicio;
     private String EtiquetaIntermedio;
     private String EtiquetaFinal;
-    public EtiquetaIterador(String pInicio, String pIntermedio, String pFinal){
+    public EtiquetaEstructura(String pInicio, String pIntermedio, String pFinal){
         EtiquetaInicio = pInicio;
         EtiquetaIntermedio = pIntermedio;
         EtiquetaFinal = pFinal;
