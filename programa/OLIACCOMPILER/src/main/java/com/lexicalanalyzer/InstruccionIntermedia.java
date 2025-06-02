@@ -198,6 +198,27 @@ class IfFalseInstr extends InstruccionIntermedia {
     }
 }
 
+class IfGotoInstr extends InstruccionIntermedia {
+    private String condicion;
+    private String etiqueta;
+
+    /**
+     * Constructor para la instruccion ifFalse.
+     *
+     * @param condicion Expresion booleana.
+     * @param etiqueta  Etiqueta a saltar si la condicion es falsa.
+     */
+    public IfGotoInstr(String condicion, String etiqueta) {
+        this.condicion = condicion;
+        this.etiqueta = etiqueta;
+    }
+
+    @Override
+    public String toString() {
+        return "if " + condicion + " goto " + etiqueta;
+    }
+}
+
 /**
  * Representa una instruccion de salto incondicional.
  * Sintaxis: goto etiqueta
@@ -349,5 +370,60 @@ class ReturnInstr extends InstruccionIntermedia {
     @Override
     public String toString() {
         return "return " + valor;
+    }
+}
+
+class InputInstr extends InstruccionIntermedia {
+    private String Instr;
+    private String Registro;
+    private String ID;
+
+    /**
+     * Constructor de la instruccion de retorno.
+     * 
+     * @param valor Valor que sera retornado por la funcion
+     */
+    public InputInstr(String instr, String registro, String id) {
+        this.Instr = instr;
+        this.Registro = registro;
+        this.ID = id;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena con el valor a retornar
+     */
+    @Override
+    public String toString() {
+        String temp = GeneradorTemporales.nuevoTemporal();
+        return Instr + " " + Registro + "\n" + ID + " = " + Registro;
+    }
+}
+
+class OutputInstr extends InstruccionIntermedia {
+    private String Instr;
+    private String Registro;
+    private String ID;
+
+    /**
+     * Constructor de la instruccion de retorno.
+     * 
+     * @param valor Valor que sera retornado por la funcion
+     */
+    public OutputInstr(String instr, String registro, String id) {
+        this.Instr = instr;
+        this.Registro = registro;
+        this.ID = id;
+    }
+
+    /**
+     * Devuelve la representacion textual de la instruccion.
+     * 
+     * @return Una cadena con el valor a retornar
+     */
+    @Override
+    public String toString() {
+        return Registro + " = " + ID + "\n" + Instr + " " + Registro;
     }
 }

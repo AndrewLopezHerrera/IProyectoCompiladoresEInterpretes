@@ -34,7 +34,7 @@ assign = "="
 
 /*Literales*/
 int_literal = -?(0|[1-9][0-9]*)
-float_literal = -?(0.0|([1-9][0-9]*|0)\.[0-9]*[1-9])
+float_literal = -?([1-9][0-9]*|0)\.([0-9]*[1-9]|0)
 boolean_literal = "luna"|"sol"
 string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'

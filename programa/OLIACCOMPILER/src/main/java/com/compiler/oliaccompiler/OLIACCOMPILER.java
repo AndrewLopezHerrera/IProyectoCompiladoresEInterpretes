@@ -21,31 +21,22 @@ public class OLIACCOMPILER implements Runnable {
     @Override
     public void run() {
         try {
-            // Crear el lexer con el archivo
             MiLexer lexer = new MiLexer(new FileReader(file));
-
-            // Crear el parser
             parser p = new parser(lexer);
-
-            // Parsear
             p.parse();
-
-            // Verificar errores y mostrar tabla
-            if (p.error_count == 0) {
-                System.out.println("\n--- Parseo exitoso, sin errores sintácticos ---");
-                System.out.println("--- Generando código intermedio en: " + output.getPath() + " ---");
-                p.escribirCodigoIntermedio("codigo_intermedio.txt");
-
-                // Escribir el código intermedio en el archivo especificado
-                p.escribirCodigoIntermedio(output.getPath());
-
-            } else {
+            if (p.error_count != 0) {
                 System.out.println("\n--- Parseo finalizado ---");
                 System.out.println("Cantidad de errores sintácticos detectados: " + p.error_count);
+            } else if(p.error_semantic_count != 0){
+                System.out.println("\n--- Análisis semántico finalizado ---");
+                System.out.println("Cantidad de errores semánticos detectados: " + p.error_semantic_count);
+            }else {
+                System.out.println("\n--- Parseo exitoso, sin errores sintácticos ---");
+                System.out.println("--- Análisis semántico exitoso ---");
+                System.out.println("--- Generando código intermedio en: " + output.getPath() + " ---");
+                p.escribirCodigoIntermedio("codigo_intermedio.txt");
+                p.escribirCodigoIntermedio(output.getPath());// Escribir el código intermedio en el archivo especificado
             }
-
-            // Mostrar tabla de símbolos
-            p.printTables();
 
         }catch (Exception e) {
             System.err.println("Error durante el parseo: " + e.getMessage());

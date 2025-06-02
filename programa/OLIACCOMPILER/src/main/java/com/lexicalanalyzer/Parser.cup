@@ -28,6 +28,9 @@ parser code {:
     // Funcion actual en procesamiento
     private Function ActualFunction = null;
 
+    //Pila de las instrucciones iterables que se han creado
+    private List<EtiquetaIterador> PilaIteradores = new ArrayList<>();
+
     /**
      * Maneja errores sintacticos encontrados por el parser
      * @param s simbolo donde ocurrio el error
@@ -175,9 +178,9 @@ terminal ID, VOID;
 non terminal programa, main_func, func_decl, func_list, param_list, param, block;
 non terminal stmt_list, stmt, var_decl, assign_stmt, var_decl_asisgn_stmt;
 non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
-non terminal if_stmt, if_elif_stmt, if_else_stmt, if_elif_else_stmt, elif_blocks, elif_block;
+non terminal if_elif_else_stmt, if_block, elif_blocks, elif_block, else_block;
 non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, simple_type, matrix_type, comment;
-non terminal func_call, arg_list, write_stmt, read_stmt, selection_stmt;
+non terminal func_call, arg_list, write_stmt, read_stmt;
 non terminal array_decl, array_int_expr, array_int_expr_list, for_assign;
 
 // Precedencias
@@ -756,14 +759,15 @@ arith_expr ::=
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "/", val2));
 
-        RESULT = new String[] {
-            "float", // La division siempre se interpreta como flotante
-            temp
-        };
-    } else {
-        Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
-        parser.semantic_error(operador, "no se puede dividir " + tipo1 + " con " + tipo2);
-        RESULT = new String[] { "error", "" };
+            RESULT = new String[] {
+                "float", // La division siempre se interpreta como flotante
+                temp
+            };
+        } else {
+            Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
+            parser.semantic_error(operador, "no se puede dividir " + tipo1 + " con " + tipo2);
+            RESULT = new String[] { "error", "" };
+        }
     }
 :}
 
@@ -782,7 +786,8 @@ arith_expr ::=
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "%", val2));
 
-        RESULT = new String[] { "int", temp };
+            RESULT = new String[] { "int", temp };
+        }
     } else {
         Symbol operador = (Symbol) CUP$parser$stack.elementAt(CUP$parser$top - 1);
         parser.semantic_error(operador, "el operador modulo solo se permite entre enteros");
@@ -1006,237 +1011,133 @@ literal ::= INT_LITERAL:n
 
 // **********************************************************************************************************************************
 control_struct ::=
-    if_elif_else_stmt
-    | if_elif_stmt
-    | if_else_stmt
-    | if_stmt
-    | selection_stmt
+    if_elif_else_stmt {::}
     | do_while_stmt
     | for_stmt;
 
 // **********************************************************************************************************************************
-if_elif_else_stmt ::= 
-    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
-    elif_blocks:elifList ELSE block:blockElse
+if_elif_else_stmt ::=
 {:
-    if (cond != null) {
-        String[] condicionIf = (String[]) cond;
-        String tempCondIf = condicionIf[1];
-
-        String etiquetaNext = parser.nuevaEtiqueta("elif_next");
-        String etiquetaFin = parser.nuevaEtiqueta("if_elif_else_fin");
-
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCondIf, etiquetaNext));
-
-        if (blockIf instanceof TablaDeSimbolos tablaIf) {
-            tablaIf.setNombre("if");
-            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaNext));
-
-        List<TablaDeSimbolos> elifs = (List<TablaDeSimbolos>) elifList;
-        for (TablaDeSimbolos elif : elifs) {
-            for (InstruccionIntermedia inst : elif.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        if (blockElse instanceof TablaDeSimbolos tablaElse) {
-            tablaElse.setNombre("else");
-            for (InstruccionIntermedia inst : tablaElse.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
-    }
-:};
-
-
-// **********************************************************************************************************************************
-if_else_stmt ::= 
-    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
-    ELSE block:blockElse
-{:
-    if (ActualTable != null && cond != null && blockIf != null && blockElse != null) {
-        String[] condicion = (String[]) cond;
-        String tempCond = condicion[1];
-
-        String etiquetaElse = parser.nuevaEtiqueta("if_else");
-        String etiquetaFin = parser.nuevaEtiqueta("if_fin");
-
-        // Etiqueta condicional
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaElse));
-
-        // Instrucciones del bloque IF
-        if (blockIf instanceof TablaDeSimbolos tablaIf) {
-            tablaIf.setNombre("if");
-            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        // Salto al final
-        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
-
-        // Etiqueta ELSE
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaElse));
-        if (blockElse instanceof TablaDeSimbolos tablaElse) {
-            tablaElse.setNombre("else");
-            for (InstruccionIntermedia inst : tablaElse.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        // Etiqueta final
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
-    }
-:};
-
-
-// **********************************************************************************************************************************
-if_elif_stmt ::= 
-    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
-    elif_blocks:elifList
-{:
-    if (cond != null) {
-        String[] condicionIf = (String[]) cond;
-        String tempCondIf = condicionIf[1];
-
-        String etiquetaNext = parser.nuevaEtiqueta("elif_next");
-        String etiquetaFin = parser.nuevaEtiqueta("if_elif_fin");
-
-        // Evaluar condición IF
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCondIf, etiquetaNext));
-
-        // Bloque IF
-        if (blockIf instanceof TablaDeSimbolos tablaIf) {
-            tablaIf.setNombre("if");
-            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaNext));
-
-        // Agrega bloques elif
-        List<TablaDeSimbolos> elifs = (List<TablaDeSimbolos>) elifList;
-        for (TablaDeSimbolos elif : elifs) {
-            for (InstruccionIntermedia inst : elif.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
-        }
-
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
-    }
-:};
-
-
-// **********************************************************************************************************************************
-selection_stmt ::= IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK
-{:
-    if(ActualTable != null && cond != null && ifbody != null){
-        String[] condicion = (String[]) cond;
-        String tempCond = condicion[1];
-
-        String etiquetaFin = parser.nuevaEtiqueta("finIF");
-
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaFin));
-        parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) ifbody);
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
+    if(ActualTable != null){
+        String etiquedaInicio = nuevaEtiqueta("if_elif_else_inicio");
+        String etiquedaIntermedia = nuevaEtiqueta("if_elif_else_intermedio");
+        String etiquetaFin = nuevaEtiqueta("if_elif_else_final");
+        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+            etiquedaIntermedia, etiquetaFin));
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
     }
 :}
-| IF expr:cond OPEN_BLOCK stmt_list:ifbody CLOSE_BLOCK ELSE OPEN_BLOCK stmt_list:elsebody CLOSE_BLOCK
+    if_block elif_blocks else_block
 {:
-    if(ActualTable != null && cond != null && ifbody != null && elsebody != null){
-        String[] condicion = (String[]) cond;
-        String tempCond = condicion[1];
-
-        String etiquetaElse = parser.nuevaEtiqueta("inicioElse");
-        String etiquetaFin = parser.nuevaEtiqueta("finElse");
-
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaElse));
-        parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) ifbody);
-        parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaElse));
-        parser.codigoIntermedio.addAll((List<InstruccionIntermedia>) elsebody);
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
+    if(ActualTable != null){
+        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
+        PilaIteradores.removeLast();
     }
 :};
 
-
-// **********************************************************************************************************************************
-if_stmt ::= 
-    IF PARENTHESIS_L expr:cond PARENTHESIS_R block:blockIf
+if_block ::=
+    IF PARENTHESIS_L expr:cond PARENTHESIS_R
 {:
-    if (ActualTable != null && cond != null) {
+    if(ActualTable != null && cond != null){
         String[] condicion = (String[]) cond;
-        String tempCond = condicion[1];
-
-        String etiquetaFin = parser.nuevaEtiqueta("if_fin");
-
-        parser.codigoIntermedio.add(new IfFalseInstr(tempCond, etiquetaFin));
-
-        if (blockIf instanceof TablaDeSimbolos tablaIf) {
-            tablaIf.setNombre("if");
-            for (InstruccionIntermedia inst : tablaIf.getInstrucciones()) {
-                parser.codigoIntermedio.add(inst);
-            }
+        if(condicion[0].equals("boolean")){
+            String etiquedaInicio = nuevaEtiqueta("if_inicio");
+            String etiquedaIntermedia = nuevaEtiqueta("if_intermedio");
+            String etiquetaFin = nuevaEtiqueta("if_final");
+            PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+                etiquedaIntermedia, etiquetaFin));
+            parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
+            parser.codigoIntermedio.add(new IfGotoInstr(condicion[1], etiquedaIntermedia));
+            parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+            parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
         }
-
-        parser.codigoIntermedio.add(new EtiquetaInstr(etiquetaFin));
+        else{
+            System.err.println("Error semántico: La estructura de control if " +
+                "espera un tipo booleano en su argumento, en cambio se envió " +
+                "un tipo " + condicion[0] + ".");
+        }
+    }
+:}
+    block:blockData
+{:
+    if(ActualTable != null && cond != null && blockData != null){
+        TablaDeSimbolos table = (TablaDeSimbolos) blockData;
+        table.setNombre("if");
+        EtiquetaIterador estructura = PilaIteradores.removeLast();
+        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
+        parser.codigoIntermedio.add(new EtiquetaInstr(estructura.getEtiquetaFinal()));
     }
 :};
-
 
 // ***********************************BLOQUES*ELIF**********************************************************************************************
 elif_blocks ::= 
-    elif_block:eb elif_blocks:rest
-{:
-    List<TablaDeSimbolos> lista = new ArrayList<>();
-    lista.add((TablaDeSimbolos) eb);
-    lista.addAll((List<TablaDeSimbolos>) rest);
-    RESULT = lista;
-:}
-| elif_block:eb
-{:
-    List<TablaDeSimbolos> lista = new ArrayList<>();
-    lista.add((TablaDeSimbolos) eb);
-    RESULT = lista;
-:};
+    elif_block elif_blocks
+    | ;
 
 // **********************************************************************************************************************************
 elif_block ::= 
-    ELIF PARENTHESIS_L expr:cond PARENTHESIS_R block:bloque
+    ELIF PARENTHESIS_L expr:cond PARENTHESIS_R
 {:
-    String[] condicion = (String[]) cond;
-    String tempCond = condicion[1];
-    String etiquetaSiguiente = parser.nuevaEtiqueta("elif_next");
-    String etiquetaSalida = parser.nuevaEtiqueta("elif_fin");
-
-    TablaDeSimbolos tabla = (TablaDeSimbolos) bloque;
-    tabla.setNombre("elif");
-
-    tabla.getInstrucciones().add(0, new IfFalseInstr(tempCond, etiquetaSiguiente));
-    tabla.getInstrucciones().add(new GotoInstr(etiquetaSalida));
-    tabla.getInstrucciones().add(new EtiquetaInstr(etiquetaSiguiente));
-
-    RESULT = tabla;
+    if(ActualTable != null && cond != null){
+        String[] condicion = (String[]) cond;
+        if(condicion[0].equals("boolean")){
+            String etiquedaInicio = nuevaEtiqueta("elif_inicio");
+            String etiquedaIntermedia = nuevaEtiqueta("elif_intermedio");
+            String etiquetaFin = nuevaEtiqueta("elif_final");
+            PilaIteradores.add(new EtiquetaIterador(etiquedaInicio,
+                etiquedaIntermedia, etiquetaFin));
+            parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
+            parser.codigoIntermedio.add(new IfGotoInstr(condicion[1], etiquedaIntermedia));
+            parser.codigoIntermedio.add(new GotoInstr(etiquetaFin));
+            parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
+        }
+        else{
+            System.err.println("Error semántico: La estructura de control if " +
+                "espera un tipo booleano en su argumento, en cambio se envió " +
+                "un tipo " + condicion[0] + ".");
+        }
+    }
+:}
+    block:blockData
+{:
+    if(ActualTable != null && cond != null && blockData != null){
+        TablaDeSimbolos table = (TablaDeSimbolos) blockData;
+        table.setNombre("elif");
+        EtiquetaIterador estructura = PilaIteradores.removeLast();
+        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
+        parser.codigoIntermedio.add(new EtiquetaInstr(estructura.getEtiquetaFinal()));
+    }
 :};
+
+else_block ::=
+    ELSE block:blockData
+{:
+    if(ActualTable != null && blockData != null){
+        TablaDeSimbolos table = (TablaDeSimbolos) blockData;
+        table.setNombre("else");
+        EtiquetaIterador estructuraPadre = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new GotoInstr(estructuraPadre.getEtiquetaFinal()));
+    }
+:}
+    | ;
 
 // **********************************************************************************************************************************
 do_while_stmt ::=
     DO
 {:
     if(ActualTable != null){
-        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "do-while");
+        TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "do_while");
         ActualTable.AgregarHijo(table);
         ActualTable = table;
+        String etiquedaInicio = nuevaEtiqueta("do-while_inicio");
+        String etiquedaIntermedia = nuevaEtiqueta("do-while_intermedio");
+        String etiquetaFin = nuevaEtiqueta("do-while_final");
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
+        parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
+        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
     }
 :}
     block WHILE PARENTHESIS_L expr:type PARENTHESIS_R
@@ -1250,6 +1151,13 @@ do_while_stmt ::=
                 "una expresion de tipo " + typeExpr[0] + ".");
             error_semantic_count++;
         }
+        else{
+            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            parser.codigoIntermedio.add(new IfFalseInstr(typeExpr[1], iterador.getEtiquetaFinal()));
+            parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaIntermedio()));
+            parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
+            PilaIteradores.removeLast();
+        }
     }
 :};
 
@@ -1257,21 +1165,32 @@ do_while_stmt ::=
 for_stmt ::=
     FOR
 {:
-    String etiquedaInicio = null;
-    String etiquedaIntermedia = null;
-    String etiquetaFin = null;
     if(ActualTable != null){
         TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "for");
         ActualTable.AgregarHijo(table);
         ActualTable = table;
-        etiquedaInicio = nuevaEtiqueta("for_inicio");
-        etiquedaIntermedia = nuevaEtiqueta("for_intermedio");
-        etiquetaFin = nuevaEtiqueta("for_final");
+        String etiquedaInicio = nuevaEtiqueta("for_inicio");
+        String etiquedaIntermedia = nuevaEtiqueta("for_intermedio");
+        String etiquetaFin = nuevaEtiqueta("for_final");
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
+        PilaIteradores.add(new EtiquetaIterador(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
     }
 :}
-    PARENTHESIS_L for_assign END_LINE expr:type END_LINE
-
+    PARENTHESIS_L for_assign END_LINE
+{:
+    if(ActualTable != null){
+        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaIntermedio()));
+    }
+:}
+    expr:type END_LINE
+{:
+    if(ActualTable != null && type != null){
+        String[] typeAux = (String[]) type;
+        EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+        parser.codigoIntermedio.add(new IfFalseInstr(typeAux[1], iterador.getEtiquetaFinal()));
+    }
+:}
     assign_stmt PARENTHESIS_R block
 {:
     if(ActualTable != null && type != null){
@@ -1282,6 +1201,12 @@ for_stmt ::=
                 "expresion de tipo booleano para en su segundo parámetro para funcionar. En cambio, se " +
                 "una expresion de tipo " + typeExpr[0] + ".");
             error_semantic_count++;
+        }
+        else{
+            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaIntermedio()));
+            parser.codigoIntermedio.add(new EtiquetaInstr(iterador.getEtiquetaFinal()));
+            PilaIteradores.removeLast();
         }
     }
 :};
@@ -1296,9 +1221,10 @@ return_stmt ::= RETURN expr:type
 {:
     if(ActualTable != null && type != null){
         String[] typeReturn = (String[]) type;
+        String valorReturn = (String) typeReturn[1];
         if(!typeReturn[0].equals(ActualFunction.getTipo())){
             System.err.println("Error semántico: El valor retornado " +
-                typeReturn + " no corresponde con el tipo de retorno " +
+                typeReturn[0] + " no corresponde con el tipo de retorno " +
                 ActualFunction.getTipo() + " de la funcion " +
                 ActualFunction.getNombre() + ".");
             error_semantic_count++;
@@ -1318,7 +1244,7 @@ break_stmt ::= BREAK
         TablaDeSimbolos actualTable = ActualTable;
         while (actualTable != null){
             if(ActualTable.getNombre().equals("for")
-                || ActualTable.getNombre().equals("do-while"))
+                || ActualTable.getNombre().equals("do_while"))
                 break;
             actualTable = actualTable.getPadre();
         }
@@ -1326,6 +1252,10 @@ break_stmt ::= BREAK
             System.err.println("Error semántico: El BREAK solo puede utilizarse"
                 + " dentro de iteradores for o do-while");
             error_semantic_count++;
+        }
+        else{
+            EtiquetaIterador iterador = PilaIteradores.get(PilaIteradores.size()-1);
+            parser.codigoIntermedio.add(new GotoInstr(iterador.getEtiquetaFinal()));
         }
     }
 :};
@@ -1442,10 +1372,16 @@ arg_list ::= expr:type COMMA arg_list:types
 
 // **********************************************************************************************************************************
 write_stmt ::= 
-    WRITE_INT INT_LITERAL 
+    WRITE_INT INT_LITERAL:data
+{:
+    if(ActualTable != null && data != null){
+        String[] dataAux = (String[]) data;
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_INT", nuevoTemporal(), dataAux[1]));
+    }
+:}
     | WRITE_INT ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1458,19 +1394,26 @@ write_stmt ::=
                 line.getNombre());
             error_semantic_count++;
         }
+        else if(!line.getTipo().equals("int")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo entero");
+            error_semantic_count++;
+        }   
         else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo entero");
-                error_semantic_count++;
-            }   
+            parser.codigoIntermedio.add(new OutputInstr("WRITE_INT", nuevoTemporal(), id));
         }
     }
 :}
-    | WRITE_FLOAT FLOAT_LITERAL 
+    | WRITE_FLOAT FLOAT_LITERAL:data
+{:
+    if(ActualTable != null && data != null){
+        String[] dataAux = (String[]) data;
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_FLOAT", nuevoTemporal(), dataAux[1]));
+    }
+:}
     | WRITE_FLOAT ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1483,19 +1426,26 @@ write_stmt ::=
                 line.getNombre());
             error_semantic_count++;
         }
-        else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo flotante");
-                error_semantic_count++;
-            }   
+        else if(!line.getTipo().equals("float")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo flotante.");
+            error_semantic_count++;
+        }
+        else {
+            parser.codigoIntermedio.add(new OutputInstr("WRITE_FLOAT", nuevoTemporal(), id));
         }
     }
 :}
-    | WRITE_STRING STRING_LITERAL 
+    | WRITE_STRING STRING_LITERAL:data
+{:
+    if(ActualTable != null && data != null){
+        String[] dataAux = (String[]) data;
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_STRING", nuevoTemporal(), dataAux[1]));
+    }
+:}
     | WRITE_STRING ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1508,19 +1458,26 @@ write_stmt ::=
                 line.getNombre());
             error_semantic_count++;
         }
-        else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo string");
-                error_semantic_count++;
-            }   
+        else if(!line.getTipo().equals("string")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo string");
+            error_semantic_count++;
+        }
+        else {
+            parser.codigoIntermedio.add(new OutputInstr("WRITE_STRING", nuevoTemporal(), id));
         }
     }
 :}
-    | WRITE_BOOLEAN BOOLEAN_LITERAL 
+    | WRITE_BOOLEAN BOOLEAN_LITERAL:data
+{:
+    if(ActualTable != null && data != null){
+        String[] dataAux = (String[]) data;
+        parser.codigoIntermedio.add(new OutputInstr("WRITE_BOOLEAN", nuevoTemporal(), dataAux[1]));
+    }
+:}
     | WRITE_BOOLEAN ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1533,12 +1490,13 @@ write_stmt ::=
                 line.getNombre());
             error_semantic_count++;
         }
+        else if(!line.getTipo().equals("boolean")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo booleano");
+            error_semantic_count++;
+        }
         else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo booleano");
-                error_semantic_count++;
-            }   
+            parser.codigoIntermedio.add(new OutputInstr("WRITE_BOOLEAN", nuevoTemporal(), id));
         }
     }
 :};
@@ -1547,7 +1505,7 @@ write_stmt ::=
 read_stmt ::= 
     READ_INT ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1557,21 +1515,22 @@ read_stmt ::=
         }
         else if(!line.getEstaInicializado()){
             System.err.println("No se ha inicializado el identificador " +
-                line.getNombre());
+                line.getNombre() + ".");
+            error_semantic_count++;
+        }
+        else if(!line.getTipo().equals("int")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo entero.");
             error_semantic_count++;
         }
         else{
-            if(!line.getTipo().equals("int")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo entero");
-                error_semantic_count++;
-            }   
+            parser.codigoIntermedio.add(new InputInstr("READ_INT", nuevoTemporal(), id));
         }
     }
 :}
     | READ_FLOAT ID:name
 {:
-    if(ActualTable != null && name == null){
+    if(ActualTable != null && name != null){
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
@@ -1584,12 +1543,13 @@ read_stmt ::=
                 line.getNombre());
             error_semantic_count++;
         }
+        else if(!line.getTipo().equals("float")){
+            System.err.println("Error semántico: El identificador debe ser"
+                + " de tipo flotante");
+            error_semantic_count++;
+        }
         else{
-            if(!line.getTipo().equals("float")){
-                System.err.println("Error semántico: El identificador debe ser"
-                    + " de tipo flotante");
-                error_semantic_count++;
-            }   
+            parser.codigoIntermedio.add(new InputInstr("READ_FLOAT", nuevoTemporal(), id));
         }
     }
 :};
