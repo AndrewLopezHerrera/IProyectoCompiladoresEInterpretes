@@ -1118,7 +1118,7 @@ class CUP$parser$actions {
         int row = 0;
         int column = 0;
         
-        createVar(tipo, nameVar, row, column, true); // Lo marcas como inicializado
+        createVar(tipo, nameVar, row, column, true); // como inicializado
         parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
         RESULT = tipo;
 =======

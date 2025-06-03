@@ -288,16 +288,6 @@ param_list ::=
 param ::= type:typeVar ID:name
 {:
     if(ActualTable != null && typeVar != null && name != null){
-<<<<<<< Updated upstream
-        String nameVar = name.toString();
-        String tipo = typeVar.toString();
-        int row = 0;
-        int column = 0;
-        
-        createVar(tipo, nameVar, row, column, true); // como inicializado
-        parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
-        RESULT = tipo;
-=======
         String nameVarAux = name.toString();
         String typeAux = typeVar.toString();
         int row = 0;
@@ -305,9 +295,9 @@ param ::= type:typeVar ID:name
         LineaTabla line = createVar(typeAux, nameVarAux, row, column, true);
         if(line == null){
             semantic_error(null, "El identificador " + nameVarAux + " está repetido.");
+            parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar));
         }
         RESULT = typeAux;
->>>>>>> Stashed changes
     }
 :};
 
