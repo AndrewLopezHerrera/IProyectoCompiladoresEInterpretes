@@ -1112,16 +1112,6 @@ class CUP$parser$actions {
 		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
     if(ActualTable != null && typeVar != null && name != null){
-<<<<<<< Updated upstream
-        String nameVar = name.toString();
-        String tipo = typeVar.toString();
-        int row = 0;
-        int column = 0;
-        
-        createVar(tipo, nameVar, row, column, true); // como inicializado
-        parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
-        RESULT = tipo;
-=======
         String nameVarAux = name.toString();
         String typeAux = typeVar.toString();
         int row = 0;
@@ -1130,8 +1120,10 @@ class CUP$parser$actions {
         if(line == null){
             semantic_error(null, "El identificador " + nameVarAux + " está repetido.");
         }
+        else{
+            parser.codigoIntermedio.add(new ParamInstr(typeAux, nameVarAux));
+        }
         RESULT = typeAux;
->>>>>>> Stashed changes
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("param",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1501,6 +1493,8 @@ class CUP$parser$actions {
                 "tipo " + typeIndexAux[0] + ".");
         } else {
             RESULT = new String[] { line.getTipo(), id };
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new ArrayAsign(id, typeIndexAux[1], typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -1528,10 +1522,6 @@ class CUP$parser$actions {
                 String temp = parser.nuevoTemporal();
                 parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
                 parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
-                if (ActualTable != null) {
-                    ActualTable.agregarInstruccion(new OperacionInstr(temp, id, "+", "1"));
-                    ActualTable.agregarInstruccion(new AsignacionInstr(id, temp));
-                }
             }
         }
     
@@ -1623,6 +1613,9 @@ class CUP$parser$actions {
             semantic_error(null, "No se le puede asignar el tipo " + typeExprAux[0] + " al " +
             " idenficador " + varLine.getNombre() + " con tipo " +
             varLine.getTipo() + ".");
+        }
+        else{
+            parser.codigoIntermedio.add(new DeclAsigInstr(varLine.getTipo(), varLine.getNombre(), typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -1830,6 +1823,14 @@ class CUP$parser$actions {
           case 53: // array_int_expr ::= BRACKET array_int_expr_list BRACKET 
             {
               Object RESULT =null;
+		int numArrayleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int numArrayright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object numArray = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		
+    String numArrayAux = numArray.toString();
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, "|" + numArrayAux + "|"));
+    RESULT = new String[] {"intArray", temp};
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_int_expr",36, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1839,9 +1840,6 @@ class CUP$parser$actions {
           case 54: // array_int_expr ::= BRACKET BRACKET 
             {
               Object RESULT =null;
-		
-    String temp = parser.nuevoTemporal();
-    RESULT = new String[] {"intArray", temp};
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_int_expr",36, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1851,6 +1849,16 @@ class CUP$parser$actions {
           case 55: // array_int_expr_list ::= INT_LITERAL COMMA array_int_expr_list 
             {
               Object RESULT =null;
+		int numleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int numright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object num = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int numArrayleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int numArrayright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object numArray = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    String numAux = num.toString();
+    String numArrayAux = numArray.toString();
+    RESULT = numAux + "," + numArrayAux;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_int_expr_list",37, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1860,6 +1868,11 @@ class CUP$parser$actions {
           case 56: // array_int_expr_list ::= INT_LITERAL 
             {
               Object RESULT =null;
+		int numleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int numright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object num = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    RESULT = num.toString();
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_int_expr_list",37, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

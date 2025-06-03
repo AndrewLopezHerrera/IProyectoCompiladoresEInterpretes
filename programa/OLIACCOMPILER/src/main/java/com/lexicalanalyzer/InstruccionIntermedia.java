@@ -443,3 +443,18 @@ class ParamInstr extends InstruccionIntermedia {
     }
 }
 
+class ArrayAsign extends InstruccionIntermedia {
+    private String Indice;
+    private String Nombre;
+    private String Registro;
+
+    public ArrayAsign(String nombre, String indice, String registro) {
+        this.Indice = indice;
+        this.Nombre = nombre;
+    }
+
+    @Override
+    public String toString() {
+        return Nombre + "[" + Indice + "] = " + Registro;
+    }
+}

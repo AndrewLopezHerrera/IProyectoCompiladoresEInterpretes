@@ -295,7 +295,9 @@ param ::= type:typeVar ID:name
         LineaTabla line = createVar(typeAux, nameVarAux, row, column, true);
         if(line == null){
             semantic_error(null, "El identificador " + nameVarAux + " está repetido.");
-            parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar));
+        }
+        else{
+            parser.codigoIntermedio.add(new ParamInstr(typeAux, nameVarAux));
         }
         RESULT = typeAux;
     }
@@ -486,6 +488,8 @@ assign_stmt ::=
                 "tipo " + typeIndexAux[0] + ".");
         } else {
             RESULT = new String[] { line.getTipo(), id };
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new ArrayAsign(id, typeIndexAux[1], typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -506,10 +510,6 @@ assign_stmt ::=
                 String temp = parser.nuevoTemporal();
                 parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
                 parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
-                if (ActualTable != null) {
-                    ActualTable.agregarInstruccion(new OperacionInstr(temp, id, "+", "1"));
-                    ActualTable.agregarInstruccion(new AsignacionInstr(id, temp));
-                }
             }
         }
     :}
@@ -580,6 +580,9 @@ var_decl_asisgn_stmt ::= var_decl:var ASSIGN expr:type
             semantic_error(null, "No se le puede asignar el tipo " + typeExprAux[0] + " al " +
             " idenficador " + varLine.getNombre() + " con tipo " +
             varLine.getTipo() + ".");
+        }
+        else{
+            parser.codigoIntermedio.add(new DeclAsigInstr(varLine.getTipo(), varLine.getNombre(), typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -687,17 +690,27 @@ expr ::=
 
 // **********************************************************************************************************************************
 array_int_expr ::=
-    BRACKET array_int_expr_list BRACKET
-    | BRACKET BRACKET
+    BRACKET array_int_expr_list:numArray BRACKET
 {:
+    String numArrayAux = numArray.toString();
     String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, "|" + numArrayAux + "|"));
     RESULT = new String[] {"intArray", temp};
-:};
+:}
+    | BRACKET BRACKET;
 
 // **********************************************************************************************************************************
 array_int_expr_list ::=
-    INT_LITERAL COMMA array_int_expr_list
-    | INT_LITERAL;
+    INT_LITERAL:num COMMA array_int_expr_list:numArray
+{:
+    String numAux = num.toString();
+    String numArrayAux = numArray.toString();
+    RESULT = numAux + "," + numArrayAux;
+:}
+    | INT_LITERAL:num
+{:
+    RESULT = num.toString();
+:};
 
 // ******************************EXPRESIONES*ARITMETICAS***************************************************************************************************
 // Produccion para operaciones aritmeticas: suma, resta, multiplicacion, division, modulo y negacion unaria
