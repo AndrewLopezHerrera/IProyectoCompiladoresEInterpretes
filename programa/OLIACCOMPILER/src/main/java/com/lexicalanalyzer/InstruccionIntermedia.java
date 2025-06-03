@@ -451,6 +451,7 @@ class ArrayAsign extends InstruccionIntermedia {
     public ArrayAsign(String nombre, String indice, String registro) {
         this.Indice = indice;
         this.Nombre = nombre;
+        this.Registro = registro;
     }
 
     @Override
