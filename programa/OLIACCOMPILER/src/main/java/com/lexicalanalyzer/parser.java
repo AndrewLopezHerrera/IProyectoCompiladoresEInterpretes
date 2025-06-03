@@ -760,12 +760,11 @@ public class parser extends java_cup.runtime.lr_parser {
      * @param pRow fila de declaracion
      * @param pColumn columna de declaracion
      */
-    public void createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
+    public Function createFunction(String pTypeReturn, String pName, int pRow, int pColumn){
         if(Functions.containsKey(pName)){
             ActualTable = null;
             ActualFunction = null;
-            System.err.println("Error semantico: La funcion " + pName + " esta duplicada");
-            error_semantic_count++;
+            return null;
         }
         else{
             Function function = new Function(pTypeReturn, pName, pRow, pColumn, true);
@@ -774,6 +773,7 @@ public class parser extends java_cup.runtime.lr_parser {
             TablaDeSimbolos table = new TablaDeSimbolos(null, pName);
             FunctionTables.put(pName, table);
             ActualTable = table;
+            return function;
         }
     }
 
@@ -789,7 +789,6 @@ public class parser extends java_cup.runtime.lr_parser {
     public LineaTabla createVar(String pTypeReturn, String pName, int pRow, int pColumn, boolean pInitialized){
         LineaTabla line = new LineaTabla(pTypeReturn, pName, pRow, pColumn, pInitialized);
         if(!ActualTable.AgregarDato(line)){
-            System.err.println("Error semantico: La variable " + pName + " esta duplicada");
             return null;
         }
         return line;
@@ -814,7 +813,7 @@ public class parser extends java_cup.runtime.lr_parser {
             System.err.println("Error semantico en la linea " + (s.left + 1) +
                             ", columna " + (s.right + 1) + ": " + mensaje);
         } else {
-            System.err.println("Error semantico: " + mensaje);
+            System.err.println("Error semantico en la línea " + currentLine() + ": " + mensaje);
         }
         error_semantic_count++;
     }
@@ -911,12 +910,20 @@ class CUP$parser$actions {
           case 2: // NT$0 ::= 
             {
               Object RESULT =null;
+		int mainleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int mainright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object main = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 
     // Se crea la funcion main con tipo de retorno void
     int row = 0;
     int column = 0;
-    createFunction("void", "main", row, column);
-    parser.codigoIntermedio.add(new InicioFuncionInstr("main"));
+    Function function = createFunction("void", "main", row, column);
+    if(function == null){
+        semantic_error(null, "La función main está repetida.");
+    }
+    else{
+        parser.codigoIntermedio.add(new InicioFuncionInstr("main"));
+    }
     RESULT = null;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",39, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -929,6 +936,9 @@ class CUP$parser$actions {
               Object RESULT =null;
               // propagate RESULT from NT$0
                 RESULT = (Object) ((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int mainleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left;
+		int mainright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
+		Object main = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("main_func",1, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -948,13 +958,14 @@ class CUP$parser$actions {
     if(typeFunction != null && name != null){
         // Se obtiene el nombre y tipo de la funcion
         String nameFunction = name.toString();
-        String type = typeFunction.toString();
-        int row = 0;
-        int column = 0;
-
-        // Se registra la funcion en la tabla global
-        createFunction(type, nameFunction, row, column);
-        parser.codigoIntermedio.add(new InicioFuncionInstr(nameFunction));
+        String typeAux = typeFunction.toString();
+        Function function = createFunction(typeAux, nameFunction, 0, 0);
+        if(function == null){
+            semantic_error(null, "La función " + nameFunction + " está repetida.");
+        }
+        else{
+            parser.codigoIntermedio.add(new InicioFuncionInstr(nameFunction));
+        }
         RESULT = null;
     }
 
@@ -1101,6 +1112,7 @@ class CUP$parser$actions {
 		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
     if(ActualTable != null && typeVar != null && name != null){
+<<<<<<< Updated upstream
         String nameVar = name.toString();
         String tipo = typeVar.toString();
         int row = 0;
@@ -1109,6 +1121,17 @@ class CUP$parser$actions {
         createVar(tipo, nameVar, row, column, true); // Lo marcas como inicializado
         parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
         RESULT = tipo;
+=======
+        String nameVarAux = name.toString();
+        String typeAux = typeVar.toString();
+        int row = 0;
+        int column = 0;
+        LineaTabla line = createVar(typeAux, nameVarAux, row, column, true);
+        if(line == null){
+            semantic_error(null, "El identificador " + nameVarAux + " está repetido.");
+        }
+        RESULT = typeAux;
+>>>>>>> Stashed changes
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("param",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1294,13 +1317,13 @@ class CUP$parser$actions {
 		
     // Verifica que exista una tabla de simbolos activa y que los datos no sean nulos
     if(ActualTable != null && typeVar != null && name != null){
-        String nameFunction = typeVar.toString(); // Se obtiene el tipo de la variable
-        String type = name.toString();           // Se obtiene el nombre de la variable
-        int row = 0;                             // Se asigna la fila (puede mejorarse luego)
-        int column = 0;                          // Se asigna la columna (puede mejorarse luego)
-        
-        // Crea la variable en la tabla actual sin marcarla como inicializada
-        RESULT = createVar(nameFunction, type, row, column, false);
+        String nameVar = name.toString(); // Se obtiene el tipo de la variable
+        String type = typeVar.toString();           // Se obtiene el nombre de la variable
+        LineaTabla line = createVar(type, nameVar, 0, 0, false);
+        if(line == null){
+            semantic_error(null, "El identificador " + nameVar + " está repetido.");
+        }
+        RESULT = line;
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("var_decl",9, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1311,6 +1334,33 @@ class CUP$parser$actions {
           case 33: // array_decl ::= type ID LBRACKET expr RBRACKET 
             {
               Object RESULT =null;
+		int typeArrayleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left;
+		int typeArrayright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
+		Object typeArray = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
+		int nameleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
+		int nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
+		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		int typeIndexleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int typeIndexright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object typeIndex = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		
+    if(ActualTable != null && typeArray != null && name != null && typeIndex != null){
+        String typeArrayAux = typeArray.toString() + "Array";
+        String nameAux = name.toString();
+        String[] typeIndexAux = (String[]) typeIndex;
+        if(typeIndexAux[0].equals("int")){
+            LineaTabla line = createVar(typeArrayAux, nameAux, 0, 0, false);
+            if(line == null){
+                semantic_error(null, "El identificador " + nameAux + " está repetido.");
+            }
+            RESULT = line;
+        }
+        else{
+            semantic_error(null, "El tamaño del arreglo debe " +
+                "ser entero. En cambio, se ingresó un tipo " + typeIndexAux[0] +
+                " con el identificador en el índice.");
+        }
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_decl",35, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1353,11 +1403,9 @@ class CUP$parser$actions {
 
             LineaTabla line = ActualTable.BuscarDato(id);
             if (line == null || !ActualTable.setInicializacionDato(id, true)) {
-                error_semantic_count++;
-                System.err.println("El identificador " + id + " no existe.");
+                semantic_error(null, "El identificador " + id + " no existe.");
             } else if (!tipoExpr.equals(line.getTipo())) {
-                error_semantic_count++;
-                System.err.println("Error semantico: no se puede asignar el tipo " +
+                semantic_error(null, "Error semantico: no se puede asignar el tipo " +
                     tipoExpr + " a la variable " + id + " de tipo " + line.getTipo() + ".");
             } else {
                 parser.codigoIntermedio.add(new AsignacionInstr(id, valorExpr));
@@ -1375,10 +1423,47 @@ class CUP$parser$actions {
           case 37: // assign_stmt ::= ID LBRACKET expr RBRACKET LBRACKET expr RBRACKET ASSIGN expr 
             {
               Object RESULT =null;
+		int nameleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)).left;
+		int nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)).right;
+		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-8)).value;
+		int typeIndexOneleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)).left;
+		int typeIndexOneright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)).right;
+		Object typeIndexOne = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-6)).value;
+		int typeIndexTwoleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
+		int typeIndexTworight = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
+		Object typeIndexTwo = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		int typeExprleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int typeExprright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object typeExpr = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-        // TODO: Codigo intermedio para asignacion a matriz 2D
-        System.err.println("⚠ Asignacion a matriz 2D aun no implementada.");
-    
+    if (ActualTable != null && name != null && typeIndexOne != null && typeIndexTwo != null && typeExpr != null) {
+        String id = name.toString();
+        String[] typeIndexOneAux = (String[]) typeIndexOne;
+        String[] typeIndexTwoAux = (String[]) typeIndexTwo;
+        String[] typeExprAux = (String[]) typeExpr;
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if (line == null) {
+            semantic_error(null, "El identificador " + id + " no existe");
+        } else if (!line.getEstaInicializado()) {
+            semantic_error(null, "No se ha inicializado el identificador " + id);
+        } else if (!line.getTipo().contains(typeExprAux[0])) {
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": No se puede asignar al identificador " + id + " con tipo " +
+                line.getTipo() + " una expresión de tipo " + typeExprAux[0] + ".");
+        } else if (!typeIndexOneAux[0].equals("int")) {
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": El índice debe ser un entero. En cambio, se ingresó un " +
+                "tipo " + typeIndexOneAux[0] + ".");
+        } else if (!typeIndexTwoAux[0].equals("int")) {
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": El índice debe ser un entero. En cambio, se ingresó un " +
+                "tipo " + typeIndexTwoAux[0] + ".");
+        } else {
+            RESULT = new String[] { line.getTipo(), id };
+        }
+    }
+
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("assign_stmt",10, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-8)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1387,10 +1472,39 @@ class CUP$parser$actions {
           case 38: // assign_stmt ::= ID LBRACKET expr RBRACKET ASSIGN expr 
             {
               Object RESULT =null;
+		int nameleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).left;
+		int nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).right;
+		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-5)).value;
+		int typeIndexleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
+		int typeIndexright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
+		Object typeIndex = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		int typeExprleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int typeExprright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object typeExpr = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-        // TODO: Codigo intermedio para asignacion a matriz 1D
-        System.err.println("Asignacion a matriz 1D aun no implementada.");
-    
+    if (ActualTable != null && name != null && typeIndex != null && typeExpr != null) {
+        String id = name.toString();
+        String[] typeIndexAux = (String[]) typeIndex;
+        String[] typeExprAux = (String[]) typeExpr;
+        LineaTabla line = ActualTable.BuscarDato(id);
+        if (line == null) {
+            semantic_error(null, "El identificador " + id + " no existe");
+        } else if (!line.getEstaInicializado()) {
+            semantic_error(null, "No se ha inicializado el identificador " + id);
+        } else if (!line.getTipo().contains(typeExprAux[0])) {
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": No se puede asignar al identificador " + id + " con tipo " +
+                line.getTipo() + " una expresión de tipo " + typeExprAux[0] + ".");
+        } else if (!typeIndexAux[0].equals("int")) {
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": El índice debe ser un entero. En cambio, se ingresó un " +
+                "tipo " + typeIndexAux[0] + ".");
+        } else {
+            RESULT = new String[] { line.getTipo(), id };
+        }
+    }
+    RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
+
               CUP$parser$result = parser.getSymbolFactory().newSymbol("assign_stmt",10, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1407,11 +1521,9 @@ class CUP$parser$actions {
             String id = name.toString();
             LineaTabla line = ActualTable.BuscarDato(id);
             if (line == null) {
-                error_semantic_count++;
-                System.err.println("El identificador " + id + " no existe.");
+                semantic_error(null, "El identificador " + id + " no existe.");
             } else if (!line.getTipo().equals("int")) {
-                error_semantic_count++;
-                System.err.println("El operador ++ solo se permite sobre enteros.");
+                semantic_error(null, "El operador ++ solo se permite sobre enteros.");
             } else {
                 String temp = parser.nuevoTemporal();
                 parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
@@ -1439,14 +1551,11 @@ class CUP$parser$actions {
             String id = name.toString();
             LineaTabla line = ActualTable.BuscarDato(id);
             if (line == null) {
-                error_semantic_count++;
-                System.err.println("El identificador " + id + " no existe.");
+                semantic_error(null, "El identificador " + id + " no existe.");
             } else if (!line.getTipo().equals("int")) {
-                error_semantic_count++;
-                System.err.println("El operador -- solo se permite sobre enteros.");
+                semantic_error(null, "El operador -- solo se permite sobre enteros.");
             } else if (!line.getEstaInicializado()) {
-                error_semantic_count++;
-                System.err.println("No se ha inicializado el identificador " + id);
+                semantic_error(null, "No se ha inicializado el identificador " + id);
             } else {
                 String temp = parser.nuevoTemporal();
                 parser.codigoIntermedio.add(new OperacionInstr(temp, id, "-", "1"));
@@ -1476,12 +1585,10 @@ class CUP$parser$actions {
 
         LineaTabla line = (LineaTabla) var;   // linea correspondiente a la variable declarada
         if (line == null || !ActualTable.setInicializacionDato(line.getNombre(), true)) {
-            error_semantic_count++;
-            System.err.println("El identificador " + line.getNombre() + " no existe");
+            semantic_error(null, "El identificador " + line.getNombre() + " no existe");
         } 
         else if (!tipoExpr.equals(line.getTipo())) {
-            error_semantic_count++;
-            System.err.println("Error semantico: no se puede asignar el tipo " +
+            semantic_error(null, "Error semantico: no se puede asignar el tipo " +
                 tipoExpr + " a la variable " + line.getNombre() + " con tipo " +
                 line.getTipo() + ".");
         } 
@@ -1502,13 +1609,20 @@ class CUP$parser$actions {
 		int arrayleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
 		int arrayright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
 		Object array = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int typeExprleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int typeExprright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object typeExpr = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-    if (ActualTable != null && array != null) {
+    if (ActualTable != null && array != null && typeExpr != null) {
         LineaTabla varLine = (LineaTabla) array;
-        if (varLine != null && !ActualTable.setInicializacionDato(varLine.getNombre(), true)) {
-            System.err.println(varLine.getNombre() + " no existe en la linea " +
-                varLine.getFila() + " y columna " + varLine.getColumna());
-            error_semantic_count++;
+        String[] typeExprAux = (String[]) typeExpr;
+        if (varLine == null || !ActualTable.setInicializacionDato(varLine.getNombre(), true)) {
+            semantic_error(null, varLine.getNombre() + " no existe.");
+        }
+        else if(!varLine.getTipo().equals(typeExprAux[0])){
+            semantic_error(null, "No se le puede asignar el tipo " + typeExprAux[0] + " al " +
+            " idenficador " + varLine.getNombre() + " con tipo " +
+            varLine.getTipo() + ".");
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -1634,11 +1748,9 @@ class CUP$parser$actions {
         String id = idDeclarated.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if (line == null) {
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
+            semantic_error(null, "El identificador " + id + " no existe.");
         } else if (!line.getEstaInicializado()) {
-            error_semantic_count++;
-            System.err.println("No se ha inicializado el identificador " + id);
+            semantic_error(null, "No se ha inicializado el identificador " + id);
         } else {
             RESULT = new String[] { line.getTipo(), id };
         }
@@ -1660,19 +1772,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
+            semantic_error(null, "El identificador " + id + " no existe.");
         }
         else{
             if(!line.getTipo().equals("int")){
-                System.err.println("No se permite el uso del ++ con el tipo " +
+                semantic_error(null, "No se permite el uso del ++ con el tipo " +
                     line.getTipo() + " en el identificador " + line.getNombre());
-                error_semantic_count++;
             }
             else if(!line.getEstaInicializado()){
-                System.err.println("No se ha inicializado el identificador " +
+                semantic_error(null, "No se ha inicializado el identificador " +
                     line.getNombre());
-                error_semantic_count++;
             }
             else{
                 RESULT = new String[] {line.getTipo(), id};
@@ -1696,19 +1805,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            error_semantic_count++;
-            System.err.println("El identificador " + id + " no existe");
+            semantic_error(null, "El identificador " + id + " no existe");
         }
         else{
             if(!line.getTipo().equals("int")){
-                System.err.println("No se permite el uso del -- con el tipo " +
+                semantic_error(null, "No se permite el uso del -- con el tipo " +
                     line.getTipo() + " en el identificador " + line.getNombre());
-                error_semantic_count++;
             }
             else if(!line.getEstaInicializado()){
-                System.err.println("No se ha inicializado el identificador " +
+                semantic_error(null, "No se ha inicializado el identificador " +
                     line.getNombre());
-                error_semantic_count++;
             }
             else{
                 RESULT = new String[] {line.getTipo(), id};
@@ -1733,6 +1839,9 @@ class CUP$parser$actions {
           case 54: // array_int_expr ::= BRACKET BRACKET 
             {
               Object RESULT =null;
+		
+    String temp = parser.nuevoTemporal();
+    RESULT = new String[] {"intArray", temp};
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("array_int_expr",36, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2463,7 +2572,7 @@ class CUP$parser$actions {
             parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
         }
         else{
-            System.err.println("Error semántico: La estructura de control if " +
+            semantic_error(null, "La estructura de control if " +
                 "espera un tipo booleano en su argumento, en cambio se envió " +
                 "un tipo " + condicion[0] + ".");
         }
@@ -2539,7 +2648,7 @@ class CUP$parser$actions {
             parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
         }
         else{
-            System.err.println("Error semántico: La estructura de control if " +
+            semantic_error(null, "La estructura de control if " +
                 "espera un tipo booleano en su argumento, en cambio se envió " +
                 "un tipo " + condicion[0] + ".");
         }
@@ -2638,10 +2747,9 @@ class CUP$parser$actions {
         ActualTable = ActualTable.getPadre();
         String[] typeExpr = (String[]) type;
         if(!typeExpr[0].equals("boolean")){
-            System.err.println("Error semántico: do-while necesita una " +
+            semantic_error(null, "do-while necesita una " +
                 "expresion de tipo booleano para funcionar. En cambio, se " +
                 "una expresion de tipo " + typeExpr[0] + ".");
-            error_semantic_count++;
         }
         else{
             EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
@@ -2722,10 +2830,9 @@ class CUP$parser$actions {
         ActualTable = ActualTable.getPadre();
         String[] typeExpr = (String[]) type;
         if(!typeExpr[0].equals("boolean")){
-            System.err.println("Error semántico: for necesita una " +
+            semantic_error(null, "for necesita una " +
                 "expresion de tipo booleano para en su segundo parámetro para funcionar. En cambio, se " +
                 "una expresion de tipo " + typeExpr[0] + ".");
-            error_semantic_count++;
         }
         else{
             EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
@@ -2751,11 +2858,10 @@ class CUP$parser$actions {
         String[] typeReturn = (String[]) type;
         String valorReturn = typeReturn[1];
         if(!typeReturn[0].equals(ActualFunction.getTipo())){
-            System.err.println("Error semántico: El valor retornado " +
+            semantic_error(null, "El valor retornado " +
                 typeReturn[0] + " no corresponde con el tipo de retorno " +
                 ActualFunction.getTipo() + " de la funcion " +
                 ActualFunction.getNombre() + ".");
-            error_semantic_count++;
         }
 
         // Agregar instruccion intermedia para return
@@ -2771,6 +2877,9 @@ class CUP$parser$actions {
           case 100: // break_stmt ::= BREAK 
             {
               Object RESULT =null;
+		int nameleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
     if(ActualTable != null){
         TablaDeSimbolos actualTable = ActualTable;
@@ -2781,9 +2890,8 @@ class CUP$parser$actions {
             actualTable = actualTable.getPadre();
         }
         if(actualTable == null){
-            System.err.println("Error semántico: El BREAK solo puede utilizarse"
+            semantic_error(null, "El BREAK solo puede utilizarse"
                 + " dentro de iteradores for o do-while");
-            error_semantic_count++;
         }
         else{
             EtiquetaEstructura iterador = PilaIteradores.get(PilaIteradores.size()-1);
@@ -2951,13 +3059,14 @@ class CUP$parser$actions {
                 parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
                 ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
             } else {
-                System.err.println("Error semantico: La funcion " + nameCall +
-                    " tiene argumentos de tipo |" + argsFunction + "|, pero se enviaron |" +
+                semantic_error(null, "La funcion " + nameCall +
+                    " tiene argumentos de tipo |" + function.getArguments() + "|, pero se enviaron |" +
                     argsCall + "|.");
                 RESULT = new String[]{ "error", "" };
             }
         } else {
-            System.err.println("Error semantico: No existe la funcion " + nameCall + ".");
+            semantic_error(null, "La funcion " + nameCall +
+                    " no existe");
             RESULT = new String[]{ "error", "" };
         }
     }
@@ -2987,13 +3096,13 @@ class CUP$parser$actions {
                 parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
                 ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
             } else {
-                System.err.println("Error semantico: La funcion " + nameCall +
+                semantic_error(null, "La funcion " + nameCall +
                     " tiene argumentos de tipo |" + argsFunction + "|, pero se enviaron |" +
                     argsCall + "|.");
                 RESULT = new String[]{ "error", "" };
             }
         } else {
-            System.err.println("Error semantico: No existe la funcion " + nameCall + ".");
+            semantic_error(null, "No existe la funcion " + nameCall + ".");
             RESULT = new String[]{ "error", "" };
         }
     }
@@ -3070,19 +3179,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre());
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("int")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "El identificador debe ser"
                 + " de tipo entero");
-            error_semantic_count++;
         }   
         else{
             parser.codigoIntermedio.add(new OutputInstr("WRITE_INT", nuevoTemporal(), id));
@@ -3122,19 +3228,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre());
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("float")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "El identificador debe ser"
                 + " de tipo flotante.");
-            error_semantic_count++;
         }
         else {
             parser.codigoIntermedio.add(new OutputInstr("WRITE_FLOAT", nuevoTemporal(), id));
@@ -3174,19 +3277,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre());
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("string")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "Error semántico: El identificador debe ser"
                 + " de tipo string");
-            error_semantic_count++;
         }
         else {
             parser.codigoIntermedio.add(new OutputInstr("WRITE_STRING", nuevoTemporal(), id));
@@ -3226,19 +3326,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre());
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("boolean")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "El identificador debe ser"
                 + " de tipo booleano");
-            error_semantic_count++;
         }
         else{
             parser.codigoIntermedio.add(new OutputInstr("WRITE_BOOLEAN", nuevoTemporal(), id));
@@ -3261,19 +3358,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre() + ".");
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("int")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "Error semántico: El identificador debe ser"
                 + " de tipo entero.");
-            error_semantic_count++;
         }
         else{
             parser.codigoIntermedio.add(new InputInstr("READ_INT", nuevoTemporal(), id));
@@ -3296,19 +3390,16 @@ class CUP$parser$actions {
         String id = name.toString();
         LineaTabla line = ActualTable.BuscarDato(id);
         if(line == null){
-            System.err.println("Error semántico: El identificador " +
+            semantic_error(null, "Error semántico: El identificador " +
                 id + " no existe");
-            error_semantic_count++;
         }
         else if(!line.getEstaInicializado()){
-            System.err.println("No se ha inicializado el identificador " +
+            semantic_error(null, "No se ha inicializado el identificador " +
                 line.getNombre());
-            error_semantic_count++;
         }
         else if(!line.getTipo().equals("float")){
-            System.err.println("Error semántico: El identificador debe ser"
+            semantic_error(null, "El identificador debe ser"
                 + " de tipo flotante");
-            error_semantic_count++;
         }
         else{
             parser.codigoIntermedio.add(new InputInstr("READ_FLOAT", nuevoTemporal(), id));
