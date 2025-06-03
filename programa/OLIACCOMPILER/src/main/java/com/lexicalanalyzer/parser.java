@@ -1102,11 +1102,13 @@ class CUP$parser$actions {
 		
     if(ActualTable != null && typeVar != null && name != null){
         String nameVar = name.toString();
-        String type = typeVar.toString();
+        String tipo = typeVar.toString();
         int row = 0;
         int column = 0;
-        createVar(type, nameVar, row, column, true);
-        RESULT = type;
+        
+        createVar(tipo, nameVar, row, column, true); // Lo marcas como inicializado
+        parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
+        RESULT = tipo;
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("param",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);

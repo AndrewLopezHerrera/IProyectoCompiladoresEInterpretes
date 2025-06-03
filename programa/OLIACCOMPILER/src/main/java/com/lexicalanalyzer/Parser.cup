@@ -279,17 +279,21 @@ param_list ::=
 // ************************************************PARAMETROS**********************************************************************************
 // Produccion que representa un parametro individual de una funcion
 // Esta compuesto por un tipo y un identificador (nombre de variable)
+
 param ::= type:typeVar ID:name
 {:
     if(ActualTable != null && typeVar != null && name != null){
         String nameVar = name.toString();
-        String type = typeVar.toString();
+        String tipo = typeVar.toString();
         int row = 0;
         int column = 0;
-        createVar(type, nameVar, row, column, true);
-        RESULT = type;
+        
+        createVar(tipo, nameVar, row, column, true); // como inicializado
+        parser.codigoIntermedio.add(new ParamInstr(tipo, nameVar)); // genera los parametros
+        RESULT = tipo;
     }
 :};
+
 
 // ***************************************************BLOQUE*DE*CODIGO*****************************************************************************
 // Produccion que representa un bloque de codigo delimitado por llaves

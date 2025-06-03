@@ -15,7 +15,7 @@ public abstract class InstruccionIntermedia {
 }
 
 // --------------------------
-// Instrucciones concretas
+// Instrucciones concret as
 // --------------------------
 
 /**
@@ -427,3 +427,19 @@ class OutputInstr extends InstruccionIntermedia {
         return Registro + " = " + ID + "\n" + Instr + " " + Registro;
     }
 }
+
+class ParamInstr extends InstruccionIntermedia {
+    private String tipo;
+    private String nombre;
+
+    public ParamInstr(String tipo, String nombre) {
+        this.tipo = tipo;
+        this.nombre = nombre;
+    }
+
+    @Override
+    public String toString() {
+        return "param " + tipo + " " + nombre;
+    }
+}
+
