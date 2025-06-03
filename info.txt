@@ -1,6 +1,6 @@
 a. Compiladores e Intérpretes
 b. I Semestre 2025
 c. Andrew López Herrera – 2021062132 y Hillary Malespín Ulloa – 2021106074
-d. Proyecto 1
-e. Fecha de entrega: 28/04/2025
-f. Excelente
+d. Proyecto 2
+e. Fecha de entrega: 2/06/2025
+f. Bueno
