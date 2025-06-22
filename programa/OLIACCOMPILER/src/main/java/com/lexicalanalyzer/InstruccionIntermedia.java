@@ -322,6 +322,7 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
     private String nombre;
     private List<String> argumentos;
     private String destino;
+    private int CantidadParametros;
 
     /**
      * Constructor de la instruccion de llamada a funcion.
@@ -330,10 +331,11 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
      * @param argumentos Lista de argumentos que se pasan a la funcion
      * @param destino    Nombre del temporal que almacenara el resultado
      */
-    public LlamadaFuncionInstr(String nombre, List<String> argumentos, String destino) {
+    public LlamadaFuncionInstr(String nombre, String destino, int cantidadParametros) {
         this.nombre = nombre;
         this.argumentos = argumentos;
         this.destino = destino;
+        this.CantidadParametros = cantidadParametros;
     }
 
     /**
@@ -343,7 +345,7 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
      */
     @Override
     public String toString() {
-        return destino + " = call " + nombre + "(" + String.join(", ", argumentos) + ")";
+        return destino + " = call " + nombre + ", " + CantidadParametros;
     }
 }
 
@@ -428,34 +430,100 @@ class OutputInstr extends InstruccionIntermedia {
     }
 }
 
+
 class ParamInstr extends InstruccionIntermedia {
     private String tipo;
     private String nombre;
+    private int Indice;
+    private static int CantidadParametros = 0;
 
     public ParamInstr(String tipo, String nombre) {
         this.tipo = tipo;
         this.nombre = nombre;
+        CantidadParametros++;
+        this.Indice = CantidadParametros;
     }
 
     @Override
     public String toString() {
-        return "param " + tipo + " " + nombre;
+        return "param " + Indice + " " + tipo + " " + nombre;
+    }
+    
+    public void restartIndex(){
+        CantidadParametros = 0;
     }
 }
 
-class ArrayAsign extends InstruccionIntermedia {
-    private String Indice;
+class ArrayIni extends InstruccionIntermedia {
     private String Nombre;
     private String Registro;
 
-    public ArrayAsign(String nombre, String indice, String registro) {
-        this.Indice = indice;
+    public ArrayIni(String nombre, String registro) {
         this.Nombre = nombre;
         this.Registro = registro;
     }
 
     @Override
     public String toString() {
-        return Nombre + "[" + Indice + "] = " + Registro;
+        return "copy " + Nombre + ", " + Registro;
     }
+}
+
+class ArrayDecl extends InstruccionIntermedia {
+    private String Cantidad;
+    private String Nombre;
+    private String Tipo;
+
+    public ArrayDecl(String nombre, String tipo, String cantidad) {
+        this.Cantidad = cantidad;
+        this.Nombre = nombre;
+        this.Tipo = tipo;
+    }
+
+    @Override
+    public String toString() {
+        return Tipo + " " + Nombre + "[" + Cantidad + "]";
+    }
+}
+
+class ParamAsign extends InstruccionIntermedia {
+    private String Nombre;
+    private String Tipo;
+    private static int ContadorParam = 0;
+
+    public ParamAsign(String nombre, String tipo) {
+        this.Nombre = nombre;
+        this.Tipo = tipo;
+        ContadorParam++;
+    }
+
+    @Override
+    public String toString() {
+        return "param " + Tipo + " " + Nombre;
+    }
+    
+    public static void restartIndex(){
+        ContadorParam = 0;
+    }
+    public static int getIndex(){
+        return ContadorParam;
+    }
+}
+
+class ArrayIndex extends InstruccionIntermedia {
+    private String Nombre;
+    private String Indice;
+    private String Destino;
+
+    public ArrayIndex(String nombre, String indice, String destino) {
+        this.Nombre = nombre;
+        this.Indice = indice;
+        this.Destino = destino;
+    }
+
+    @Override
+    public String toString() {
+        return Destino + " = " + Nombre + " + " + Indice;
+    }
+    
 }

@@ -51,7 +51,7 @@ string_literal = \"([^\"\\]|\\.)*\"
 char_literal = \'([^\'\\]|\\.)\'
 ID = [_A-Za-z][_A-Za-z0-9]*
 space  = [ \t]+
-line = [\r\n]
+line = \r\n|[\r\n]
 
 /* Arreglos */
 bracket = "|"
@@ -131,7 +131,7 @@ write_boolean = "writeBoolean" [ \t\r\n]* "->" [ \t\r\n]*
 /* Reglas léxicas y acciones (acciones de Java) */
 
 {space}                     { /* Ignorar espacios y saltos de línea */ }
-{line}                      { for (char c : yytext().toCharArray()) if (c == '\n') newline(); }
+{line}                      { newline(); }
 
 {int_literal}               { return symbol(sym.INT_LITERAL, yytext()); }
 

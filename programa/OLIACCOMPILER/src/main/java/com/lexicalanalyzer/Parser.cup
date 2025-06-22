@@ -186,7 +186,7 @@ non terminal expr, arith_expr, rel_expr, logic_expr, literal, control_struct;
 non terminal if_elif_else_stmt, if_block, elif_blocks, elif_block, else_block;
 non terminal do_while_stmt, for_stmt, return_stmt, break_stmt, type, simple_type, matrix_type, comment;
 non terminal func_call, arg_list, write_stmt, read_stmt;
-non terminal array_decl, array_int_expr, array_int_expr_list, for_assign;
+non terminal array_decl, array_int_expr, array_int_expr_list, for_assign, array_index_expr;
 
 // Precedencias
 precedence left EQ, NEQ, LT, LE, GT, GE;
@@ -364,6 +364,9 @@ var_decl ::=
         if(line == null){
             semantic_error(null, "El identificador " + nameVar + " está repetido.");
         }
+        else{
+            parser.codigoIntermedio.add(new DeclInstr(type, nameVar));
+        }
         RESULT = line;
     }
 :};
@@ -386,6 +389,9 @@ array_decl ::=
             LineaTabla line = createVar(typeArrayAux, nameAux, 0, 0, false);
             if(line == null){
                 semantic_error(null, "El identificador " + nameAux + " está repetido.");
+            }
+            else{
+                parser.codigoIntermedio.add(new ArrayDecl(line.getNombre(), line.getTipo(), typeIndexAux[1]));
             }
             RESULT = line;
         }
@@ -489,7 +495,7 @@ assign_stmt ::=
         } else {
             RESULT = new String[] { line.getTipo(), id };
             String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new ArrayAsign(id, typeIndexAux[1], typeExprAux[1]));
+            parser.codigoIntermedio.add(new ArrayIni(line.getNombre(), typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -561,7 +567,7 @@ var_decl_asisgn_stmt ::= var_decl:var ASSIGN expr:type
         } 
         else {
             // Codigo intermedio para declaracion con asignacion
-            parser.codigoIntermedio.add(new DeclAsigInstr(line.getTipo(), line.getNombre(), valorExpr));
+            parser.codigoIntermedio.add(new AsignacionInstr(line.getNombre(), valorExpr));
         }
     }
 :}
@@ -576,13 +582,13 @@ var_decl_asisgn_stmt ::= var_decl:var ASSIGN expr:type
         if (varLine == null || !ActualTable.setInicializacionDato(varLine.getNombre(), true)) {
             semantic_error(null, varLine.getNombre() + " no existe.");
         }
-        else if(!varLine.getTipo().equals(typeExprAux[0])){
+        else if(!varLine.getTipo().contains(typeExprAux[0])){
             semantic_error(null, "No se le puede asignar el tipo " + typeExprAux[0] + " al " +
             " idenficador " + varLine.getNombre() + " con tipo " +
             varLine.getTipo() + ".");
         }
         else{
-            parser.codigoIntermedio.add(new DeclAsigInstr(varLine.getTipo(), varLine.getNombre(), typeExprAux[1]));
+            parser.codigoIntermedio.add(new ArrayIni(varLine.getNombre(), typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -626,6 +632,11 @@ expr ::=
     if(type != null)
         RESULT = type;
 :}
+    | array_index_expr:type
+{:
+    if(type != null)
+        RESULT = type;
+:}
     | ID:idDeclarated
 {:
     if (ActualTable != null && idDeclarated != null) {
@@ -636,7 +647,9 @@ expr ::=
         } else if (!line.getEstaInicializado()) {
             semantic_error(null, "No se ha inicializado el identificador " + id);
         } else {
-            RESULT = new String[] { line.getTipo(), id };
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new AsignacionInstr(temp, id));
+            RESULT = new String[] { line.getTipo(), temp };
         }
     }
 :}
@@ -659,7 +672,13 @@ expr ::=
                     line.getNombre());
             }
             else{
-                RESULT = new String[] {line.getTipo(), id};
+                String temp1 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp1, "1"));
+                String temp2 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp2, id));
+                String temp3 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new OperacionInstr(temp3, temp2, "+", temp1));
+                RESULT = new String[] {line.getTipo(), temp3};
             }
         }
     }
@@ -682,7 +701,13 @@ expr ::=
                     line.getNombre());
             }
             else{
-                RESULT = new String[] {line.getTipo(), id};
+                String temp1 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp1, "1"));
+                String temp2 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp2, id));
+                String temp3 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new OperacionInstr(temp3, temp2, "-", temp1));
+                RESULT = new String[] {line.getTipo(), temp3};
             }
         }
     }
@@ -698,6 +723,27 @@ array_int_expr ::=
     RESULT = new String[] {"intArray", temp};
 :}
     | BRACKET BRACKET;
+
+array_index_expr ::= 
+    ID:name LBRACKET expr:typeArg RBRACKET
+{:
+    if(ActualTable != null && name != null && typeArg != null){
+        String nameAux = (String) name;
+        String[] typeArgAux = (String[]) typeArg;
+        LineaTabla line = ActualTable.BuscarDato(nameAux);
+        if (line == null) {
+            semantic_error(null, "El identificador " + nameAux + " no existe.");
+        } else if (!line.getEstaInicializado()) {
+            semantic_error(null, "No se ha inicializado el identificador " + nameAux);
+        } else if(!typeArgAux[0].equals("int")){
+            semantic_error(null, "El argumento del índice está debe de ser de tipo int, en cambio se ingresó el tipo " + typeArgAux[0]);
+        } else {
+            String temp = parser.nuevoTemporal();
+            parser.codigoIntermedio.add(new ArrayIndex(nameAux, typeArgAux[1], temp));
+            RESULT = new String[] { "int", nameAux };
+        }
+    }
+:};
 
 // **********************************************************************************************************************************
 array_int_expr_list ::=
@@ -728,8 +774,8 @@ arith_expr ::=
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "+", val2));
@@ -756,8 +802,8 @@ arith_expr ::=
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "-", val2));
@@ -784,8 +830,8 @@ arith_expr ::=
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "*", val2));
@@ -810,8 +856,8 @@ arith_expr ::=
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "*", val2));
@@ -838,8 +884,8 @@ arith_expr ::=
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "/", val2));
@@ -910,8 +956,8 @@ rel_expr ::= expr:e1 LT expr:e2
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "<", val2));
@@ -931,8 +977,8 @@ rel_expr ::= expr:e1 LT expr:e2
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, "<=", val2));
@@ -952,8 +998,8 @@ rel_expr ::= expr:e1 LT expr:e2
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, ">", val2));
@@ -973,8 +1019,8 @@ rel_expr ::= expr:e1 LT expr:e2
         String tipo2 = v2[0], val2 = v2[1];
 
         if (ActualTable != null && e1 != null && e2 != null &&
-            (tipo1.equals("int") || tipo1.equals("float")) &&
-            (tipo2.equals("int") || tipo2.equals("float"))) {
+            ((tipo1.equals("int") && tipo1.equals("int")) ||
+            (tipo2.equals("float") && tipo2.equals("float")))) {
 
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new OperacionInstr(temp, val1, ">=", val2));
@@ -1075,23 +1121,33 @@ for_assign ::=
 
 literal ::= INT_LITERAL:n
 {:
-    RESULT = new String[] { "int", n.toString() };
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, n.toString()));
+    RESULT = new String[] { "int", temp };
 :}
 | FLOAT_LITERAL:n
 {:
-    RESULT = new String[] { "float", n.toString() };
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, n.toString()));
+    RESULT = new String[] { "float", temp };
 :}
 | BOOLEAN_LITERAL:n
 {:
-    RESULT = new String[] { "boolean", n.toString() };
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, n.toString()));
+    RESULT = new String[] { "boolean", temp };
 :}
 | STRING_LITERAL:n
 {:
-    RESULT = new String[] { "string", n.toString() };
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, n.toString()));
+    RESULT = new String[] { "string", temp };
 :}
 | CHAR_LITERAL:n
 {:
-    RESULT = new String[] { "char", n.toString() };
+    String temp = parser.nuevoTemporal();
+    parser.codigoIntermedio.add(new AsignacionInstr(temp, n.toString()));
+    RESULT = new String[] { "char", temp };
 :};
 
 // **********************************************************************************************************************************
@@ -1374,7 +1430,11 @@ comment ::=
  * y se devuelve su tipo de retorno si es correcta.
  */
 func_call ::=
-    ID:name PARENTHESIS_L arg_list:args PARENTHESIS_R
+    ID:name PARENTHESIS_L
+{:
+    ParamAsign.getIndex();
+:}
+     arg_list:args PARENTHESIS_R
 {:
     if (ActualTable != null && args != null && name != null) {
         String nameCall = name.toString();
@@ -1383,11 +1443,11 @@ func_call ::=
             Function function = Functions.get(nameCall);
             String argsFunction = function.getArguments();
             if (argsFunction.equals(argsCall)) {
-                RESULT = new String[]{ function.getTipo(), nameCall + "()" };
-
                 // Generar codigo intermedio para la llamada a funcion
-                parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
-                ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
+                String temp = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                RESULT = new String[]{ function.getTipo(), temp };
             } else {
                 semantic_error(null, "La funcion " + nameCall +
                     " tiene argumentos de tipo |" + function.getArguments() + "|, pero se enviaron |" +
@@ -1415,11 +1475,11 @@ func_call ::=
             Function function = Functions.get(nameCall);
             String argsFunction = function.getArguments();
             if (argsFunction.equals(argsCall)) {
-                RESULT = new String[]{ function.getTipo(), nameCall + "()" };
-
                 // Generar codigo intermedio para la llamada a funcion
-                parser.codigoIntermedio.add(new OperacionInstr("call", nameCall, "", ""));
-                ActualTable.agregarInstruccion(new OperacionInstr("call", nameCall, "", ""));
+                String temp = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                RESULT = new String[]{ function.getTipo(), temp };
             } else {
                 semantic_error(null, "La funcion " + nameCall +
                     " tiene argumentos de tipo |" + argsFunction + "|, pero se enviaron |" +
@@ -1435,7 +1495,14 @@ func_call ::=
 
 
 // **********************************************************************************************************************************
-arg_list ::= expr:type COMMA arg_list:types
+arg_list ::= expr:type COMMA
+{:
+    if(ActualTable != null && type != null){
+        String[] typeAux = (String[]) type;
+        parser.codigoIntermedio.add(new ParamAsign(typeAux[1], typeAux[0]));
+    }
+:}
+    arg_list:types
 {:
     if(ActualTable != null && type != null && types != null){
         String typesAux = types.toString();
@@ -1447,8 +1514,8 @@ arg_list ::= expr:type COMMA arg_list:types
 {:
     if(ActualTable != null && type != null){
         String[] typeAux = (String[]) type;
+        parser.codigoIntermedio.add(new ParamAsign(typeAux[1], typeAux[0]));
         RESULT = typeAux[0];
-
     }
 :};
 
