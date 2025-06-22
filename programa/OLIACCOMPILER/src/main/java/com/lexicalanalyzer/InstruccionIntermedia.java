@@ -510,12 +510,12 @@ class ParamAsign extends InstruccionIntermedia {
     }
 }
 
-class ArrayIndex extends InstruccionIntermedia {
+class ArrayIndexLoad extends InstruccionIntermedia {
     private String Nombre;
     private String Indice;
     private String Destino;
 
-    public ArrayIndex(String nombre, String indice, String destino) {
+    public ArrayIndexLoad(String nombre, String indice, String destino) {
         this.Nombre = nombre;
         this.Indice = indice;
         this.Destino = destino;
@@ -523,7 +523,25 @@ class ArrayIndex extends InstruccionIntermedia {
 
     @Override
     public String toString() {
-        return Destino + " = " + Nombre + " + " + Indice;
+        return "load " + Destino + ", " + Nombre + "[" + Indice + "]";
+    }
+    
+}
+
+class ArrayIndexStore extends InstruccionIntermedia {
+    private String Nombre;
+    private String Indice;
+    private String Registro;
+
+    public ArrayIndexStore(String nombre, String indice, String registro) {
+        this.Nombre = nombre;
+        this.Indice = indice;
+        this.Registro = registro;
+    }
+
+    @Override
+    public String toString() {
+        return "store " + Nombre + "[" + Indice + "] ," + Registro;
     }
     
 }

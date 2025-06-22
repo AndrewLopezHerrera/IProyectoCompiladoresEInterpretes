@@ -1523,10 +1523,14 @@ class CUP$parser$actions {
             semantic_error(null, "Error semántico en la línea " + currentLine() +
                 ": El índice debe ser un entero. En cambio, se ingresó un " +
                 "tipo " + typeIndexAux[0] + ".");
+        } else if(!typeExprAux[0].equals("int")){
+            semantic_error(null, "Error semántico en la línea " + currentLine() +
+                ": No se pueden ingresar datos de tipo " + typeExprAux[0] +
+                " a un " + line.getTipo());
         } else {
             RESULT = new String[] { line.getTipo(), id };
             String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new ArrayIni(line.getNombre(), typeExprAux[1]));
+            parser.codigoIntermedio.add(new ArrayIndexStore(id, typeIndexAux[1], typeExprAux[1]));
         }
     }
     RESULT = null; // Asignacion a matrices aun no genera codigo intermedio
@@ -1929,7 +1933,7 @@ class CUP$parser$actions {
             semantic_error(null, "El argumento del índice está debe de ser de tipo int, en cambio se ingresó el tipo " + typeArgAux[0]);
         } else {
             String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new ArrayIndex(nameAux, typeArgAux[1], temp));
+            parser.codigoIntermedio.add(new ArrayIndexLoad(nameAux, typeArgAux[0], temp));
             RESULT = new String[] { "int", nameAux };
         }
     }
