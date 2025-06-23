@@ -1,0 +1,141 @@
+package com.mipstranslator;
+import java_cup.runtime.*;
+import java.util.*;
+
+parser code {:
+  
+:}
+
+// === Terminales ===
+terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
+terminal TEMP, ID;
+terminal INT, FLOAT, BOOLEAN, CHAR, STRING;
+terminal POW, ADD, SUB, MUL, DIV, MOD;
+terminal AND, OR, NOT;
+terminal EQ, NEQ, LE, LT, GE, GT;
+terminal ASSIGN;
+terminal LBRACK, RBRACK, PIPE, COMMA;
+terminal LOAD, STORE, COPY, PARAM, CALL, RETURN, GOTO, IF, IFFALSE;
+terminal READ_INT, READ_FLOAT, WRITE_INT, WRITE_FLOAT, WRITE_STRING, WRITE_BOOLEAN;
+terminal COLON;
+
+// === No terminales ===
+non terminal programa, bloqueInstrucciones;
+non terminal instruccion, expresion, tipo, literal, identificador, temporal;
+non terminal declaracion, asignacion, declaracionArreglo, copiaArreglo, guardarEnArreglo, cargarDeArreglo;
+non terminal llamadaFuncion, parametro, retorno;
+non terminal escritura, lectura;
+non terminal instruccionCondicional, instruccionGoto, etiqueta;
+non terminal numeros, expresionLiteral;
+non terminal llamadaFuncionConAsignacion;
+
+// === Inicio ===
+start with programa;
+
+// === Reglas ===
+programa ::= bloqueInstrucciones;
+
+bloqueInstrucciones ::= instruccion bloqueInstrucciones
+                      | instruccion;
+
+instruccion ::= declaracion
+              | asignacion
+              | declaracionArreglo
+              | guardarEnArreglo
+              | cargarDeArreglo
+              | copiaArreglo
+              | escritura
+              | lectura
+              | llamadaFuncion
+              | llamadaFuncionConAsignacion
+              | retorno
+              | instruccionGoto
+              | instruccionCondicional
+              | etiqueta
+              | parametro;
+
+// === Declaraciones y asignaciones ===
+declaracion ::=
+    tipo identificador
+    | tipo identificador LBRACK temporal RBRACK;
+
+asignacion ::=
+    temporal ASSIGN expresionLiteral
+    | identificador ASSIGN temporal
+    | identificador LBRACK temporal RBRACK ASSIGN temporal;
+
+identificador ::= ID:name
+{:
+    if(name != null)
+        RESULT = name;
+:};
+
+temporal ::= TEMP;
+
+tipo ::= INT
+      | FLOAT
+      | BOOLEAN
+      | CHAR
+      | STRING;
+
+literal ::= INT_LITERAL
+         | FLOAT_LITERAL
+         | BOOLEAN_LITERAL
+         | STRING_LITERAL
+         | CHAR_LITERAL;
+
+// === Arreglos ===
+declaracionArreglo ::= tipo identificador LBRACK expresion RBRACK;
+copiaArreglo ::= COPY identificador COMMA ID;
+guardarEnArreglo ::= STORE identificador LBRACK temporal RBRACK COMMA temporal;
+cargarDeArreglo ::= LOAD temporal COMMA identificador LBRACK temporal RBRACK;
+
+// === Escritura y lectura ===
+escritura ::= WRITE_STRING expresion
+            | WRITE_INT expresion
+            | WRITE_FLOAT expresion
+            | WRITE_BOOLEAN expresion;
+
+lectura ::= READ_INT identificador
+          | READ_FLOAT identificador;
+
+parametro ::= PARAM tipo identificador;
+
+llamadaFuncion ::= CALL ID COMMA INT_LITERAL;
+
+llamadaFuncionConAsignacion ::= temporal ASSIGN CALL ID COMMA INT_LITERAL;
+
+retorno ::= RETURN temporal;
+
+expresionLiteral ::= literal
+                    |identificador
+                    |temporal
+                    |PIPE numeros PIPE;
+
+numeros ::= INT_LITERAL COMMA numeros
+            | ;
+
+// === Operaciones ===
+expresion ::= temporal ADD temporal
+            | temporal SUB temporal
+            | temporal MUL temporal
+            | temporal DIV temporal
+            | temporal MOD temporal
+            | temporal POW temporal
+            | temporal EQ temporal
+            | temporal NEQ temporal
+            | temporal LE temporal
+            | temporal LT temporal
+            | temporal GE temporal
+            | temporal GT temporal
+            | temporal AND temporal
+            | temporal OR temporal
+            | NOT temporal;
+
+// === Control de flujo ===
+instruccionCondicional ::= IF expresion GOTO ID
+                        | IFFALSE expresion GOTO ID;
+
+instruccionGoto ::= GOTO ID;
+
+etiqueta ::= ID COLON;
