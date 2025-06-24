@@ -3,7 +3,14 @@ import java_cup.runtime.*;
 import java.util.*;
 
 parser code {:
-  
+    private ArrayList<TablaSimbolos> Tablas;
+    private TablaSimbolos TablaActual = null;
+
+    private void AgregarTablaSimbolos(String nombre){
+        TablaSimbolos nuevaTabla = new TablaSimbolos(nombre, TablaActual);
+        Tablas.add(nuevaTabla);
+        TablaActual = nuevaTabla;
+    }
 :}
 
 // === Terminales ===
@@ -56,8 +63,18 @@ instruccion ::= declaracion
 
 // === Declaraciones y asignaciones ===
 declaracion ::=
-    tipo identificador
-    | tipo identificador LBRACK temporal RBRACK;
+    tipo:nombreTipo identificador:nombre
+{:
+    if(TablaActual != null && nombreTipo != null && nombre != null){
+        TablaActual.AgregarVariable(nombreTipo.toString(), nombre.toString());
+    }
+:}
+    | tipo identificador LBRACK temporal RBRACK
+{:
+    if(TablaActual != null && nombreTipo != null && nombre != null){
+        TablaActual.AgregarVariable(nombreTipo.toString(), nombre.toString());
+    }
+:};
 
 asignacion ::=
     temporal ASSIGN expresionLiteral
@@ -70,19 +87,72 @@ identificador ::= ID:name
         RESULT = name;
 :};
 
-temporal ::= TEMP;
+temporal ::= TEMP:temp
+{:
 
-tipo ::= INT
-      | FLOAT
-      | BOOLEAN
-      | CHAR
-      | STRING;
+:};
 
-literal ::= INT_LITERAL
-         | FLOAT_LITERAL
-         | BOOLEAN_LITERAL
-         | STRING_LITERAL
-         | CHAR_LITERAL;
+tipo ::= INT:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:}
+      | FLOAT:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:}
+      | BOOLEAN:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:}
+      | CHAR:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:}
+      | STRING:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:};
+
+literal ::= INT_LITERAL:literal
+{:
+    if(tipo != null){
+        RESULT = new String[]{"int", literal.toString()};
+    }
+:}
+         | FLOAT_LITERAL:literal
+{:
+    if(tipo != null){
+        RESULT = new String[]{"float", literal.toString()};
+    }
+:}
+         | BOOLEAN_LITERAL:literal
+{:
+    if(tipo != null){
+        RESULT = new String[]{"boolean", literal.toString()};
+    }
+:}
+         | STRING_LITERAL:literal
+{:
+    if(tipo != null){
+        RESULT = new String[]{"string", literal.toString()};
+    }
+:}
+         | CHAR_LITERAL:literal
+{:
+    if(tipo != null){
+        RESULT = new String[]{"char", literal.toString()};
+    }
+:};
 
 // === Arreglos ===
 declaracionArreglo ::= tipo identificador LBRACK expresion RBRACK;
@@ -91,13 +161,13 @@ guardarEnArreglo ::= STORE identificador LBRACK temporal RBRACK COMMA temporal;
 cargarDeArreglo ::= LOAD temporal COMMA identificador LBRACK temporal RBRACK;
 
 // === Escritura y lectura ===
-escritura ::= WRITE_STRING expresion
-            | WRITE_INT expresion
-            | WRITE_FLOAT expresion
-            | WRITE_BOOLEAN expresion;
+escritura ::= WRITE_STRING temporal
+            | WRITE_INT temporal
+            | WRITE_FLOAT temporal
+            | WRITE_BOOLEAN temporal;
 
-lectura ::= READ_INT identificador
-          | READ_FLOAT identificador;
+lectura ::= READ_INT temporal
+          | READ_FLOAT temporal;
 
 parametro ::= PARAM tipo identificador;
 
