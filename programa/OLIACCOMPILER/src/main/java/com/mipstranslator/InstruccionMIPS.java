@@ -9,5 +9,6 @@ package com.mipstranslator;
  * @author andre
  */
 public interface InstruccionMIPS {
+    @Override
     public String toString();
 }

@@ -16,35 +16,37 @@ public class TablaSimbolos {
     private Map<String, LineaTabla> Variables;
     private List<InstruccionMIPS> Instrucciones;
     private String Nombre;
-    private int Memoria;
+    private int MemoriaVariables;
+    private int MemoriaParametros;
     private TablaSimbolos Padre;
     
     public TablaSimbolos(String nombre, TablaSimbolos padre){
         Variables = new HashMap<>();
         Instrucciones = new ArrayList<>();
         Nombre = nombre;
-        Memoria = 0;
+        MemoriaParametros = 8;
+        MemoriaVariables = 0;
         Padre = padre;
     }
     
     public void AgregarVariable(LineaTabla linea){
         Variables.put(linea.getNombre(), linea);
-        linea.setDireccionRelativa(Memoria);
-        Memoria += 4;
+        linea.setDireccionRelativa(MemoriaParametros * -1);
+        MemoriaParametros += 4;
     }
     
-    public void AumentarMemoria(int memoria){
-        Memoria += memoria;
+    public void AgregarParametro(LineaTabla linea){
+        Variables.put(linea.getNombre(), linea);
+        linea.setDireccionRelativa(MemoriaVariables);
+        MemoriaVariables += 4;
     }
     
     public String toString() {
         String mensaje = "";
-        mensaje += Nombre + ":\n";
-        mensaje += "addi $sp, $sp, -8\n";
-        mensaje += "sw $ra, 0($sp)\n";
-        mensaje += "sw $fp, 4($sp)\n";
         mensaje += "move $fp, $sp\n";
-        mensaje += "addi $sp, $sp, -" + Memoria + "\n";
+        mensaje += Nombre + ":\n";
+        mensaje += "addi $sp, $sp, -" + MemoriaParametros + "\n";
+        mensaje += "sw $ra, -4($sp)\n";
         for(InstruccionMIPS instruccion : Instrucciones){
             mensaje += instruccion.toString();
         }
@@ -56,6 +58,11 @@ public class TablaSimbolos {
     }
     
     public int getMemoria(){
-        return Memoria;
+        return MemoriaParametros;
+    }
+    
+    public LineaTabla ObtenerVariable(String nombre){
+        LineaTabla linea = Variables.get(nombre);
+        return linea;
     }
 }

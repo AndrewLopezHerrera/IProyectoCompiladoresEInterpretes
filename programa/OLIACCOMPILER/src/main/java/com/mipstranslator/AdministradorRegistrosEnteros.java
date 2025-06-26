@@ -43,4 +43,8 @@ public class AdministradorRegistrosEnteros {
     public String ObtenerRegistroMIPSActual(){
         return "t" + RegistroActual;
     }
+    
+    public String ObtenerRegistroMIPSDeIntermedio(String tempIntermedio){
+        return UsoDeRegistros.get(tempIntermedio);
+    }
 }
