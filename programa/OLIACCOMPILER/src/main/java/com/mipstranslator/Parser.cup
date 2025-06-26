@@ -25,8 +25,9 @@ parser code {:
 
     private void AsignarFloatTemporal(String temporalIntermedio, String flotante){
         String temporalMIPS = AdminFlotante.RegistrarRegistro(temporalIntermedio);
-        int bits = Float.floatToIntBits(flotante + "f");
-        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, bits);
+        Float numero = Float.parseFloat(flotante);
+        Integer bits = Float.floatToIntBits(numero);
+        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, bits.toString());
         TablaActual.AgregarInstruccion(instruccion);
     }
 
@@ -35,8 +36,8 @@ parser code {:
         String temporalMIPSEntero = AdminEntero.RegistrarRegistro(temporalIntermedio);
         String texto = "Hola";
         char c = caracter.charAt(0);
-        int ascii = (int) c;
-        String caracterAscii = String(ascii);
+        Integer ascii = (int) c;
+        String caracterAscii = ascii.toString();
         InstruccionMIPS instruccion = new InstruccionRegistroTemporalFlotante(temporalMIPSEntero, temporalMIPSFlotante, caracterAscii);
         TablaActual.AgregarInstruccion(instruccion);
     }
@@ -44,7 +45,7 @@ parser code {:
     private void AsignarBooleanoTemporal(String temporalIntermedio, String booleano){
         String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
         String booleanoMIPS = "0";
-        if(booleano.equals("luna")
+        if(booleano.equals("luna"))
             booleanoMIPS = "1";
         InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, booleanoMIPS);
         TablaActual.AgregarInstruccion(instruccion);
@@ -54,7 +55,7 @@ parser code {:
         String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
         String nombre = "msg" + Data.size();
         InstruccionMIPS declaracionDato = new InstruccionAsignarStringData(nombre, string);
-        Data.add(declaracionDato);
+        Data.add(declaracionDato.toString());
         InstruccionMIPS instruccion = new InstruccionCargarDireccionMemoria(temporalMIPS, nombre);
         TablaActual.AgregarInstruccion(instruccion);
     }   
@@ -113,20 +114,22 @@ declaracion ::=
     tipo:nombreTipo identificador:nombre
 {:
     if(TablaActual != null && nombreTipo != null && nombre != null){
-        TablaActual.AgregarVariable(nombreTipo.toString(), nombre.toString());
+        LineaTabla linea = new LineaTabla(nombre.toString(), nombreTipo.toString(), 0);
+        TablaActual.AgregarVariable(linea);
     }
 :}
-    | tipo identificador LBRACK temporal RBRACK
+    | tipo:tipoAux identificador:idAux LBRACK temporal:tempAux RBRACK
 {:
-    if(TablaActual != null && nombreTipo != null && nombre != null){
-        TablaActual.AgregarVariable(nombreTipo.toString(), nombre.toString());
+    if(TablaActual != null && tipoAux != null && idAux != null && tempAux != null){
+        LineaTabla linea = new LineaTabla(idAux.toString(), tipoAux.toString(), 0);
+        TablaActual.AgregarVariable(linea);
     }
 :};
 
 asignacion ::=
     temporal:tempAux ASSIGN expresionLiteral:exprAux
 {:
-    if(ActualTable != null && tempAux != null && exprAux != null){
+    if(TablaActual != null && tempAux != null && exprAux != null){
         String temp = tempAux.toString();
         String[] expr = (String[]) exprAux;
         if(expr[0].equals("int") ){
@@ -149,7 +152,7 @@ asignacion ::=
     | identificador:idAux ASSIGN temporal:tempAux
 {:
     if(idAux != null && tempAux != null && TablaActual != null){
-        String id = id.toString();
+        String id = idAux.toString();
         String temp = tempAux.toString();
         LineaTabla linea = TablaActual.ObtenerVariable(id);
         String temporal = "";
@@ -159,14 +162,14 @@ asignacion ::=
         else{
             temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
         }
-        InstruccionMIPS instruccion = new InstruccionCargarEnPila(temporal, direccion);
+        InstruccionMIPS instruccion = new InstruccionCargarEnPila(temporal, linea.getDireccionRelativa().toString());
         TablaActual.AgregarInstruccion(instruccion);
     }
 :}
-    | identificador:idAux LBRACK temporal:indiceAux RBRACK ASSIGN temporal:tempAux;
+    | identificador:idAux LBRACK temporal:indiceAux RBRACK ASSIGN temporal:tempAux
 {:
     if(idAux != null && tempAux != null && TablaActual != null && indiceAux != null){
-        String id = id.toString();
+        String id = idAux.toString();
         String temp = tempAux.toString();
         String indice = indiceAux.toString();
         LineaTabla linea = TablaActual.ObtenerVariable(id);
@@ -178,7 +181,7 @@ asignacion ::=
             temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
         }
         String indiceMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(indice);
-        InstruccionMIPS instruccion = new InstruccionCargarEnteroArreglo(temporal, direccion, indice);
+        InstruccionMIPS instruccion = new InstruccionCargarEnteroArreglo(temporal, linea.getDireccionRelativa().toString(), indice);
         TablaActual.AgregarInstruccion(instruccion);
     }
 :};
@@ -228,31 +231,31 @@ tipo ::= INT:tipo
 
 literal ::= INT_LITERAL:literal
 {:
-    if(tipo != null){
+    if(literal != null){
         RESULT = new String[]{"int", literal.toString()};
     }
 :}
          | FLOAT_LITERAL:literal
 {:
-    if(tipo != null){
+    if(literal != null){
         RESULT = new String[]{"float", literal.toString()};
     }
 :}
          | BOOLEAN_LITERAL:literal
 {:
-    if(tipo != null){
+    if(literal != null){
         RESULT = new String[]{"boolean", literal.toString()};
     }
 :}
          | STRING_LITERAL:literal
 {:
-    if(tipo != null){
+    if(literal != null){
         RESULT = new String[]{"string", literal.toString()};
     }
 :}
          | CHAR_LITERAL:literal
 {:
-    if(tipo != null){
+    if(literal != null){
         RESULT = new String[]{"char", literal.toString()};
     }
 :};

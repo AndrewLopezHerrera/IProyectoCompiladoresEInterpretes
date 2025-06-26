@@ -31,7 +31,7 @@ public class LineaTabla {
         return Tipo;
     }
 
-    public int getDireccionRelativa() {
+    public Integer getDireccionRelativa() {
         return DireccionRelativa;
     }
 }

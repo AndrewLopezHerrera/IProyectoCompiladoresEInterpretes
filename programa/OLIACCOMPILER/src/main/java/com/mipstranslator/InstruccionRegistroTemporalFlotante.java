@@ -8,7 +8,7 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionRegistroTemporalFlotante {
+public class InstruccionRegistroTemporalFlotante implements InstruccionMIPS{
     private String RegistroEntero;
     private String RegistroFlotante;
     private String Valor;
