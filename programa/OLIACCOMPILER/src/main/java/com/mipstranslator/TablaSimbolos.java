@@ -51,6 +51,10 @@ public class TablaSimbolos {
         return mensaje;
     }
     
+    public void AgregarInstruccion(InstruccionMIPS instruccion){
+        Instrucciones.add(instruccion);
+    }
+    
     public int getMemoria(){
         return Memoria;
     }

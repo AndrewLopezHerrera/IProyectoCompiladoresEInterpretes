@@ -3,14 +3,56 @@ import java_cup.runtime.*;
 import java.util.*;
 
 parser code {:
-    private ArrayList<TablaSimbolos> Tablas;
+    private ArrayList<TablaSimbolos> Tablas = new ArrayList<>();
     private TablaSimbolos TablaActual = null;
+
+    private AdministradorRegistrosFlotantes AdminFlotante = new AdministradorRegistrosFlotantes();
+    private AdministradorRegistrosEnteros AdminEntero = new AdministradorRegistrosEnteros();
+
+    private ArrayList<String> Data = new ArrayList<>();
 
     private void AgregarTablaSimbolos(String nombre){
         TablaSimbolos nuevaTabla = new TablaSimbolos(nombre, TablaActual);
         Tablas.add(nuevaTabla);
         TablaActual = nuevaTabla;
     }
+
+    private void AsignarEnteroTemporal(String temporalIntermedio, String entero){
+        String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
+        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, entero);
+    }
+
+    private void AsignarFloatTemporal(String temporalIntermedio, String flotante){
+        String temporalMIPS = AdminFlotante.RegistrarRegistro(temporalIntermedio);
+        int bits = Float.floatToIntBits(flotante + "f");
+        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, bits);
+    }
+
+    private void AsignarCharTemporal(String temporalIntermedio, String caracter){
+        String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
+        String texto = "Hola";
+        char c = caracter.charAt(0);
+        int ascii = (int) c;
+        String caracterAscii = String(ascii);
+        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, caracterAscii);
+    }
+
+    private void AsignarBooleanoTemporal(String temporalIntermedio, String booleano){
+        String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
+        String booleanoMIPS = "0";
+        if(booleano.equals("luna")
+            booleanoMIPS = "1";
+        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, booleanoMIPS);
+    }
+
+    private void AsignarStringTemporal(String temporalIntermedio, String string){
+        String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
+        String nombre = "msg" + Data.size();
+        InstruccionMIPS declaracionDato = new InstruccionAsignarStringData(nombre, string);
+        Data.add(declaracionDato);
+        InstruccionMIPS instruccion = new InstruccionCargarDireccionMemoria(temporalMIPS, nombre);
+        TablaActual.AgregarInstruccion(instruccion);
+    }   
 :}
 
 // === Terminales ===
@@ -77,19 +119,41 @@ declaracion ::=
 :};
 
 asignacion ::=
-    temporal ASSIGN expresionLiteral
+    temporal:tempAux ASSIGN expresionLiteral:exprAux
+{:
+    if(ActualTable != null && tempAux != null && exprAux != null){
+        String temp = tempAux.toString();
+        String[] expr = (String[]) exprAux;
+        if(expr[0].equals("int") ){
+            AsignarEnteroTemporal(temp, expr[1]);
+        }
+        else if(expr[0].equals("float")){
+            AsignarFloatTemporal(temp, expr[1]);
+        }
+        else if(expr[0].equals("char")){
+            AsignarCharTemporal(temp, expr[1]);
+        }
+        else if(expr[0].equals("boolean")){
+            AsignarBooleanoTemporal(temp, expr[1]);
+        }
+        else if(expr[0].equals("string")){
+            AsignarStringTemporal(temp, expr[1]);
+        }
+    }
+:}
     | identificador ASSIGN temporal
     | identificador LBRACK temporal RBRACK ASSIGN temporal;
 
 identificador ::= ID:name
 {:
     if(name != null)
-        RESULT = name;
+        RESULT = name.toString();
 :};
 
 temporal ::= TEMP:temp
 {:
-
+    if(temp != null)
+        RESULT = temp.toString();
 :};
 
 tipo ::= INT:tipo

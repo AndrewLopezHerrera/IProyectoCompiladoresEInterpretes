@@ -21,8 +21,8 @@ public class AdministradorRegistrosFlotantes {
     public AdministradorRegistrosFlotantes(){
         UsoDeRegistros = new HashMap<>();
         Registros = new ArrayList<>();
-        RegistroActual = 0;
-        for(int cantidad = 0; cantidad < 10; cantidad++){
+        RegistroActual = 4;
+        for(int cantidad = 0; cantidad < 6; cantidad++){
             Registros.add(false);
         }
     }
@@ -35,8 +35,8 @@ public class AdministradorRegistrosFlotantes {
     
     private String DarSiguienteRegistro(){
         RegistroActual++;
-        if(RegistroActual > 9)
-            RegistroActual = 0;
+        if(RegistroActual > 10)
+            RegistroActual = 4;
         return "f" + RegistroActual;
     }
     
