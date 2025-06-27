@@ -421,6 +421,7 @@ public class parser extends java_cup.runtime.lr_parser {
 
 
     private ArrayList<TablaSimbolos> Tablas = new ArrayList<>();
+    private ArrayList<String> codigoIntermedio = new ArrayList<>();
     private TablaSimbolos TablaActual = null;
 
     private AdministradorRegistrosFlotantes AdminFlotante = new AdministradorRegistrosFlotantes();
@@ -432,6 +433,17 @@ public class parser extends java_cup.runtime.lr_parser {
         TablaSimbolos nuevaTabla = new TablaSimbolos(nombre, TablaActual);
         Tablas.add(nuevaTabla);
         TablaActual = nuevaTabla;
+    }
+
+    public void traducirACodigoMIPS(String rutaArchivo) {
+        AnalizadorCodigoIntermedio analizador = new AnalizadorCodigoIntermedio(this.codigoIntermedio);
+        String codigoMIPS = analizador.generarCodigoMIPS();
+
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaArchivo)) {
+            writer.print(codigoMIPS);
+        } catch (java.io.IOException e) {
+            System.err.println("Error al escribir el archivo MIPS: " + e.getMessage());
+        }
     }
 
     private void AsignarEnteroTemporal(String temporalIntermedio, String entero){
@@ -1114,6 +1126,19 @@ class CUP$parser$actions {
           case 47: // llamadaFuncion ::= CALL ID COMMA INT_LITERAL 
             {
               Object RESULT =null;
+		int nombreleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int nombreright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object nombre = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int cantidadleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int cantidadright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object cantidad = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if(nombre != null && cantidad != null && TablaActual != null){
+        String nombreFuncion = nombre.toString();
+        String cantParametros = cantidad.toString();
+        InstruccionMIPS instruccion = new InstruccionFuncionCall(nombreFuncion, cantParametros);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("llamadaFuncion",14, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

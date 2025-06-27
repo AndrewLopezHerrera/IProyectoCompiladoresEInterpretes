@@ -4,6 +4,7 @@ import java.util.*;
 
 parser code {:
     private ArrayList<TablaSimbolos> Tablas = new ArrayList<>();
+    private ArrayList<String> codigoIntermedio = new ArrayList<>();
     private TablaSimbolos TablaActual = null;
 
     private AdministradorRegistrosFlotantes AdminFlotante = new AdministradorRegistrosFlotantes();
@@ -15,6 +16,17 @@ parser code {:
         TablaSimbolos nuevaTabla = new TablaSimbolos(nombre, TablaActual);
         Tablas.add(nuevaTabla);
         TablaActual = nuevaTabla;
+    }
+
+    public void traducirACodigoMIPS(String rutaArchivo) {
+        AnalizadorCodigoIntermedio analizador = new AnalizadorCodigoIntermedio(this.codigoIntermedio);
+        String codigoMIPS = analizador.generarCodigoMIPS();
+
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaArchivo)) {
+            writer.print(codigoMIPS);
+        } catch (java.io.IOException e) {
+            System.err.println("Error al escribir el archivo MIPS: " + e.getMessage());
+        }
     }
 
     private void AsignarEnteroTemporal(String temporalIntermedio, String entero){
@@ -277,7 +289,16 @@ lectura ::= READ_INT temporal
 
 parametro ::= PARAM tipo identificador;
 
-llamadaFuncion ::= CALL ID COMMA INT_LITERAL;
+llamadaFuncion ::= CALL ID:nombre COMMA INT_LITERAL:cantidad
+{:
+    if(nombre != null && cantidad != null && TablaActual != null){
+        String nombreFuncion = nombre.toString();
+        String cantParametros = cantidad.toString();
+        InstruccionMIPS instruccion = new InstruccionFuncionCall(nombreFuncion, cantParametros);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
+
 
 llamadaFuncionConAsignacion ::= temporal ASSIGN CALL ID COMMA INT_LITERAL;
 

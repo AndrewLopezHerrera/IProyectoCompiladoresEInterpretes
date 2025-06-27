@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 
 import java.io.FileReader;
 import java.io.File;
+import java.util.List;
 
 @Command(name = "parserapp", description = "Parser de archivos fuente", mixinStandardHelpOptions = true)
 public class OLIACCOMPILER implements Runnable {
@@ -36,7 +37,29 @@ public class OLIACCOMPILER implements Runnable {
                 System.out.println("--- Generando código intermedio en: " + output.getPath() + " ---");
                 p.escribirCodigoIntermedio("codigo_intermedio.txt");
                 p.escribirCodigoIntermedio(output.getPath());// Escribir el código intermedio en el archivo especificado
+               
+                try {
+                // Leer archivo de código intermedio
+                List<String> instrucciones = java.nio.file.Files.readAllLines(output.toPath());
+
+
+                // Crear analizador con la lista de instrucciones
+                com.mipstranslator.AnalizadorCodigoIntermedio analizador = new com.mipstranslator.AnalizadorCodigoIntermedio(instrucciones);
+                System.out.println("--- pasa el analizador" + output.getPath() + " ---");
+                String codigoMIPS = analizador.generarCodigoMIPS();
+
+                // Guardar código MIPS
+                System.out.println("--- crea el archivo mips" + output.getPath() + " ---");
+                String rutaMIPS = "codigo_mips.asm";
+                try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaMIPS)) {
+                    writer.print(codigoMIPS);
+                    System.out.println("--- Código MIPS generado exitosamente en: " + rutaMIPS + " ---");
+                }
+            } catch (Exception e) {
+                System.err.println("Error al generar el código MIPS: " + e.getMessage());
             }
+
+                        }
 
         }catch (Exception e) {
             System.err.println("Error durante el parseo: " + e.getMessage());
