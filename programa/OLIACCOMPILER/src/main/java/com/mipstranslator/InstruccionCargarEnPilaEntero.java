@@ -8,18 +8,18 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionLeerFlotante implements InstruccionMIPS{
-    private String Temporal;
+public class InstruccionCargarEnPilaEntero implements InstruccionMIPS{
+    private String Registro;
+    private String Direccion;
     
-    public InstruccionLeerFlotante(String temporal){
-        Temporal = temporal;
+    public InstruccionCargarEnPilaEntero(String registro, String direccion){
+        Registro = registro;
+        Direccion = direccion;
     }
     
     public String toString(){
         String mensaje = "";
-        mensaje += "li $v0, 6\n";
-        mensaje += "syscall\n";
-        mensaje += "move.s $" + Temporal + ", $f0\n";
+        mensaje += "sw $" + Registro + ", " + Direccion + "($fp)\n";
         return mensaje;
     }
 }

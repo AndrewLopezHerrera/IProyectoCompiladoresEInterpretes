@@ -47,4 +47,8 @@ public class AdministradorRegistrosFlotantes {
     public String ObtenerRegistroMIPSDeIntermedio(String tempIntermedio){
         return UsoDeRegistros.get(tempIntermedio);
     }
+    
+    public Boolean VerificarExistenciaRegistro(String tempIntermedio){
+        return UsoDeRegistros.containsKey(tempIntermedio);
+    }
 }

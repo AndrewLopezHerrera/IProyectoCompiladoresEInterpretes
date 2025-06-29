@@ -10,6 +10,8 @@ parser code {:
     private AdministradorRegistrosFlotantes AdminFlotante = new AdministradorRegistrosFlotantes();
     private AdministradorRegistrosEnteros AdminEntero = new AdministradorRegistrosEnteros();
 
+    private InstruccionCrearArreglo InstruccionArregloActual = null;
+
     private ArrayList<String> Data = new ArrayList<>();
 
     private void AgregarTablaSimbolos(String nombre){
@@ -31,26 +33,25 @@ parser code {:
 
     private void AsignarEnteroTemporal(String temporalIntermedio, String entero){
         String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
-        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, entero);
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralEntero(temporalMIPS, entero);
         TablaActual.AgregarInstruccion(instruccion);
     }
 
     private void AsignarFloatTemporal(String temporalIntermedio, String flotante){
-        String temporalMIPS = AdminFlotante.RegistrarRegistro(temporalIntermedio);
+        String temporalMIPSFlotante = AdminFlotante.RegistrarRegistro(temporalIntermedio);
+        String temporalMIPSEntero = AdminEntero.RegistrarRegistro("");
         Float numero = Float.parseFloat(flotante);
         Integer bits = Float.floatToIntBits(numero);
-        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, bits.toString());
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralFlotante(temporalMIPSEntero, temporalMIPSFlotante, bits.toString());
         TablaActual.AgregarInstruccion(instruccion);
     }
 
     private void AsignarCharTemporal(String temporalIntermedio, String caracter){
-        String temporalMIPSFlotante = AdminFlotante.RegistrarRegistro(temporalIntermedio);
-        String temporalMIPSEntero = AdminEntero.RegistrarRegistro(temporalIntermedio);
-        String texto = "Hola";
+        String temporalMIPS = AdminEntero.RegistrarRegistro(temporalIntermedio);
         char c = caracter.charAt(0);
         Integer ascii = (int) c;
         String caracterAscii = ascii.toString();
-        InstruccionMIPS instruccion = new InstruccionRegistroTemporalFlotante(temporalMIPSEntero, temporalMIPSFlotante, caracterAscii);
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralEntero(temporalMIPS, caracterAscii);
         TablaActual.AgregarInstruccion(instruccion);
     }
 
@@ -59,7 +60,7 @@ parser code {:
         String booleanoMIPS = "0";
         if(booleano.equals("luna"))
             booleanoMIPS = "1";
-        InstruccionMIPS instruccion = new InstruccionAsignacionTemporalLiteral(temporalMIPS, booleanoMIPS);
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralEntero(temporalMIPS, booleanoMIPS);
         TablaActual.AgregarInstruccion(instruccion);
     }
 
@@ -68,9 +69,9 @@ parser code {:
         String nombre = "msg" + Data.size();
         InstruccionMIPS declaracionDato = new InstruccionAsignarStringData(nombre, string);
         Data.add(declaracionDato.toString());
-        InstruccionMIPS instruccion = new InstruccionCargarDireccionMemoria(temporalMIPS, nombre);
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralEntero(temporalMIPS, nombre);
         TablaActual.AgregarInstruccion(instruccion);
-    }   
+    } 
 :}
 
 // === Terminales ===
@@ -90,10 +91,10 @@ terminal COLON;
 non terminal programa, bloqueInstrucciones;
 non terminal instruccion, expresion, tipo, literal, identificador, temporal;
 non terminal declaracion, asignacion, declaracionArreglo, copiaArreglo, guardarEnArreglo, cargarDeArreglo;
-non terminal llamadaFuncion, parametro, retorno;
+non terminal llamadaFuncion, parametroEntrada, parametroSalida, retorno;
 non terminal escritura, lectura;
 non terminal instruccionCondicional, instruccionGoto, etiqueta;
-non terminal numeros, expresionLiteral;
+non terminal numeros;
 non terminal llamadaFuncionConAsignacion;
 
 // === Inicio ===
@@ -119,7 +120,9 @@ instruccion ::= declaracion
               | instruccionGoto
               | instruccionCondicional
               | etiqueta
-              | parametro;
+              | parametroEntrada
+              | parametroSalida
+              | expresion;
 
 // === Declaraciones y asignaciones ===
 declaracion ::=
@@ -129,17 +132,10 @@ declaracion ::=
         LineaTabla linea = new LineaTabla(nombre.toString(), nombreTipo.toString(), 0);
         TablaActual.AgregarVariable(linea);
     }
-:}
-    | tipo:tipoAux identificador:idAux LBRACK temporal:tempAux RBRACK
-{:
-    if(TablaActual != null && tipoAux != null && idAux != null && tempAux != null){
-        LineaTabla linea = new LineaTabla(idAux.toString(), tipoAux.toString(), 0);
-        TablaActual.AgregarVariable(linea);
-    }
 :};
 
 asignacion ::=
-    temporal:tempAux ASSIGN expresionLiteral:exprAux
+    temporal:tempAux ASSIGN literal:exprAux
 {:
     if(TablaActual != null && tempAux != null && exprAux != null){
         String temp = tempAux.toString();
@@ -168,35 +164,56 @@ asignacion ::=
         String temp = tempAux.toString();
         LineaTabla linea = TablaActual.ObtenerVariable(id);
         String temporal = "";
+        InstruccionMIPS instruccion = null;
         if(linea.getTipo().equals("float")){
             temporal = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
+            instruccion = new InstruccionCargarEnPilaFlotante(temporal, linea.getDireccionRelativa().toString());
         }
         else{
             temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+            instruccion = new InstruccionCargarEnPilaEntero(temporal, linea.getDireccionRelativa().toString());
         }
-        InstruccionMIPS instruccion = new InstruccionCargarEnPila(temporal, linea.getDireccionRelativa().toString());
         TablaActual.AgregarInstruccion(instruccion);
     }
 :}
-    | identificador:idAux LBRACK temporal:indiceAux RBRACK ASSIGN temporal:tempAux
+    | temporal:tempAux ASSIGN identificador:idAux
 {:
-    if(idAux != null && tempAux != null && TablaActual != null && indiceAux != null){
+    if(idAux != null && tempAux != null && TablaActual != null){
         String id = idAux.toString();
         String temp = tempAux.toString();
-        String indice = indiceAux.toString();
         LineaTabla linea = TablaActual.ObtenerVariable(id);
         String temporal = "";
+        InstruccionMIPS instruccion = null;
         if(linea.getTipo().equals("float")){
             temporal = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
+            instruccion = new InstruccionCargarEnPilaFlotante(temporal, linea.getDireccionRelativa().toString());
         }
         else{
             temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+            instruccion = new InstruccionCargarEnPilaEntero(temporal, linea.getDireccionRelativa().toString());
         }
-        String indiceMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(indice);
-        InstruccionMIPS instruccion = new InstruccionCargarEnteroArreglo(temporal, linea.getDireccionRelativa().toString(), indice);
         TablaActual.AgregarInstruccion(instruccion);
     }
-:};
+:}
+    | temporal:tempAux ASSIGN PIPE
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String tempMIPS = AdminEntero.RegistrarRegistro(temp);
+        InstruccionCrearArreglo instruccion = new InstruccionCrearArreglo(AdminEntero, "0", tempMIPS);
+        TablaActual.AgregarInstruccion(instruccion);
+        InstruccionArregloActual = instruccion;
+    }
+:}
+      numeros PIPE;
+
+numeros ::= INT_LITERAL:numeroAux
+{:
+    if(TablaActual != null && numeroAux != null){
+        InstruccionArregloActual.AgregarNumero(numeroAux.toString());
+    }
+:} COMMA numeros
+            | ;
 
 identificador ::= ID:name
 {:
@@ -273,21 +290,139 @@ literal ::= INT_LITERAL:literal
 :};
 
 // === Arreglos ===
-declaracionArreglo ::= tipo identificador LBRACK expresion RBRACK;
-copiaArreglo ::= COPY identificador COMMA ID;
-guardarEnArreglo ::= STORE identificador LBRACK temporal RBRACK COMMA temporal;
-cargarDeArreglo ::= LOAD temporal COMMA identificador LBRACK temporal RBRACK;
+declaracionArreglo ::= tipo:tipoAux identificador:idAux LBRACK temporal:tempAux RBRACK
+{:
+    if(TablaActual != null && tipoAux != null && idAux != null && tempAux != null){
+        LineaTabla linea = new LineaTabla(idAux.toString(), tipoAux.toString(), 0);
+        TablaActual.AgregarVariable(linea);
+    }
+:};
+
+copiaArreglo ::= COPY identificador:idAux COMMA temporal:tempAux
+{:
+    if(idAux != null && tempAux != null && TablaActual != null){
+        String id = idAux.toString();
+        String temp = tempAux.toString();
+        LineaTabla linea = TablaActual.ObtenerVariable(id);
+        String temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionCargarEnPilaEntero(temporal, linea.getDireccionRelativa().toString());
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
+
+guardarEnArreglo ::= STORE identificador:idAux LBRACK temporal:indiceAux RBRACK COMMA temporal:tempAux
+{:
+    if(idAux != null && indiceAux != null && tempAux != null && TablaActual != null){
+        String id = idAux.toString();
+        String temp = tempAux.toString();
+        String indice = indiceAux.toString();
+        LineaTabla linea = TablaActual.ObtenerVariable(id);
+        String valorGuardar = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        String valorIndice = AdminEntero.ObtenerRegistroMIPSDeIntermedio(indice);
+        InstruccionMIPS instruccion = new GuardarEnArreglo(linea.getDireccionRelativa().toString(), valorIndice, valorGuardar);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
+
+cargarDeArreglo ::= LOAD temporal:tempAux COMMA identificador:idAux LBRACK temporal:indiceAux RBRACK
+{:
+    if(idAux != null && indiceAux != null && tempAux != null && TablaActual != null){
+        String id = idAux.toString();
+        String temp = tempAux.toString();
+        String indice = indiceAux.toString();
+        LineaTabla linea = TablaActual.ObtenerVariable(id);
+        String valorCargar = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        String valorIndice = AdminEntero.ObtenerRegistroMIPSDeIntermedio(indice);
+        InstruccionMIPS instruccion = new CargarDeArreglo(linea.getDireccionRelativa().toString(), valorIndice, valorCargar);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
 
 // === Escritura y lectura ===
-escritura ::= WRITE_STRING temporal
-            | WRITE_INT temporal
-            | WRITE_FLOAT temporal
-            | WRITE_BOOLEAN temporal;
+escritura ::= WRITE_STRING temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionEscribirString(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | WRITE_INT temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionEscribirEntero(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | WRITE_FLOAT temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionEscribirFlotante(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | WRITE_BOOLEAN temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionEscribirBooleano(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
 
-lectura ::= READ_INT temporal
-          | READ_FLOAT temporal;
+lectura ::= READ_INT temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminEntero.RegistrarRegistro(temp);
+        InstruccionMIPS instruccion = new InstruccionLeerEntero(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+          | READ_FLOAT temporal:tempAux
+{:
+    if(tempAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String valorImprimir = AdminFlotante.RegistrarRegistro(temp);
+        InstruccionMIPS instruccion = new InstruccionLeerEntero(valorImprimir);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
 
-parametro ::= PARAM tipo identificador;
+parametroEntrada ::= PARAM tipo:nombreTipoAux identificador:idAux
+{:
+    if(nombreTipoAux != null && idAux != null && TablaActual != null){
+        String nombreTipo = nombreTipoAux.toString();
+        String id = idAux.toString();
+        LineaTabla linea = new LineaTabla(id, nombreTipo, 0);
+        TablaActual.AgregarParametro(linea);
+    }
+:};
+
+parametroSalida ::= PARAM INT_LITERAL:numero tipo:nombreTipoAux temporal:tempAux
+{:
+    if(nombreTipoAux != null && tempAux != null && TablaActual != null && numero != null){
+        String nombreTipo = nombreTipoAux.toString();
+        String temp = tempAux.toString();
+        String numeroString = numero.toString();
+        if(nombreTipo.equals("float")){
+            String temporalMIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
+            InstruccionMIPS instruccion = new InstruccionParametroSalidaEntero(numeroString, temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String temporalMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+            InstruccionMIPS instruccion = new InstruccionParametroSalidaFlotante(numeroString, temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:};
 
 llamadaFuncion ::= CALL ID:nombre COMMA INT_LITERAL:cantidad
 {:
@@ -304,35 +439,323 @@ llamadaFuncionConAsignacion ::= temporal ASSIGN CALL ID COMMA INT_LITERAL;
 
 retorno ::= RETURN temporal;
 
-expresionLiteral ::= literal
-                    |identificador
-                    |temporal
-                    |PIPE numeros PIPE;
-
-numeros ::= INT_LITERAL COMMA numeros
-            | ;
-
 // === Operaciones ===
-expresion ::= temporal ADD temporal
-            | temporal SUB temporal
-            | temporal MUL temporal
-            | temporal DIV temporal
-            | temporal MOD temporal
-            | temporal POW temporal
-            | temporal EQ temporal
-            | temporal NEQ temporal
-            | temporal LE temporal
-            | temporal LT temporal
-            | temporal GE temporal
-            | temporal GT temporal
-            | temporal AND temporal
-            | temporal OR temporal
-            | NOT temporal;
+expresion ::= temporal:tempDestinoAux ASSIGN temporal:tempAux1 ADD temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("add", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminFlotante.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("add.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 SUB temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("sub", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminFlotante.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("sub.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 MUL temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("mul", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminFlotante.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("mul.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 DIV temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("div", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminFlotante.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("div.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 MOD temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+        String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+        String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+        InstruccionMIPS instruccion = new InstruccionOperacionMatematica("rem", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 POW temporal:tempAux2
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 EQ  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("xor", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion1);
+            InstruccionMIPS instruccion2 = new InstruccionComparacionEnteroSecundario("sltiu", tempDestinoMIPS, tempDestinoMIPS, "1");
+            TablaActual.AgregarInstruccion(instruccion2);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("c.eq.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 NEQ temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("xor", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion1);
+            InstruccionMIPS instruccion2 = new InstruccionComparacionEntero("sltu", tempDestinoMIPS, "zero", tempDestinoMIPS);
+            TablaActual.AgregarInstruccion(instruccion2);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotanteInverso("c.eq.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 LE  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion1);
+            InstruccionMIPS instruccion2 = new InstruccionComparacionEnteroSecundario("xori", tempDestinoMIPS, tempDestinoMIPS, "1");
+            TablaActual.AgregarInstruccion(instruccion2);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotante("c.le.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 LT  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotante("c.lt.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 GE  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp2MIPS, temp1MIPS);
+            TablaActual.AgregarInstruccion(instruccion1);
+            InstruccionMIPS instruccion2 = new InstruccionComparacionEnteroSecundario("xori", tempDestinoMIPS, tempDestinoMIPS, "1");
+            TablaActual.AgregarInstruccion(instruccion2);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotanteInverso("c.le.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 GT  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        if(AdminEntero.VerificarExistenciaRegistro(temp1)){
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionEntero("sge", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+            String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
+            String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotanteInverso("c.lt.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 AND temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+        String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+        String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+        InstruccionMIPS instruccion = new InstruccionComparacionEntero("and", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN temporal:tempAux1 OR  temporal:tempAux2
+{:
+    if(tempDestinoAux != null && tempAux1 != null && tempAux2 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String temp2 = tempAux2.toString();
+        String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+        String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+        String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
+        InstruccionMIPS instruccion = new InstruccionComparacionEntero("or", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+            | temporal:tempDestinoAux ASSIGN NOT temporal:tempAux1
+{:
+    if(tempDestinoAux != null && tempAux1 != null && TablaActual != null){
+        String tempDestino = tempDestinoAux.toString();
+        String temp1 = tempAux1.toString();
+        String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
+        String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
+        InstruccionMIPS instruccion = new InstruccionComparacionEntero("nor", tempDestinoMIPS, temp1MIPS, temp1MIPS);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
+
+
 
 // === Control de flujo ===
-instruccionCondicional ::= IF expresion GOTO ID
-                        | IFFALSE expresion GOTO ID;
+instruccionCondicional ::= IF temporal:tempAux GOTO identificador:idAux
+{:
+    if(tempAux != null && idAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String id = idAux.toString();
+        InstruccionMIPS instruccion = new InstruccionIfGoto(temp, id);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:}
+                        | IFFALSE temporal:tempAux GOTO identificador:idAux
+{:
+    if(tempAux != null && idAux != null && TablaActual != null){
+        String temp = tempAux.toString();
+        String id = idAux.toString();
+        InstruccionMIPS instruccion = new InstruccionIfFalseGoto(temp, id);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
 
-instruccionGoto ::= GOTO ID;
+instruccionGoto ::= GOTO identificador:idAux
+{:
+    if(idAux != null && TablaActual != null){
+        String id = idAux.toString();
+        InstruccionMIPS instruccion = new InstruccionGoto(id);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
 
-etiqueta ::= ID COLON;
+etiqueta ::= identificador:idAux COLON
+{:
+    if(idAux != null && TablaActual != null){
+        String id = idAux.toString();
+        InstruccionMIPS instruccion = new InstruccionEtiqueta(id);
+        TablaActual.AgregarInstruccion(instruccion);
+    }
+:};

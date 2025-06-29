@@ -8,7 +8,7 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionEscribirString {
+public class InstruccionEscribirString implements InstruccionMIPS{
     private String Temporal;
     
     public InstruccionEscribirString(String temporal){

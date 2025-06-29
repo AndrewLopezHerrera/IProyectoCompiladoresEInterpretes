@@ -8,7 +8,7 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionEscribirBooleano {
+public class InstruccionEscribirBooleano implements InstruccionMIPS{
     private String Temporal;
     private int NumeroCondicion;
     private static int Cantidad = 0;

@@ -8,18 +8,19 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionLeerFlotante implements InstruccionMIPS{
+public class InstruccionIfFalseGoto implements InstruccionMIPS {
     private String Temporal;
-    
-    public InstruccionLeerFlotante(String temporal){
-        Temporal = temporal;
+    private String Destino;
+
+    public InstruccionIfFalseGoto(String Temporal, String Destino) {
+        this.Temporal = Temporal;
+        this.Destino = Destino;
     }
-    
-    public String toString(){
+
+    @Override
+    public String toString() {
         String mensaje = "";
-        mensaje += "li $v0, 6\n";
-        mensaje += "syscall\n";
-        mensaje += "move.s $" + Temporal + ", $f0\n";
+        mensaje += "beq $" + Destino + ", $zero, " + Destino;
         return mensaje;
     }
 }

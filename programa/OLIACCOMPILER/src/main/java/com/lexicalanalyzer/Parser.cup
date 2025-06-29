@@ -743,7 +743,7 @@ array_index_expr ::=
             semantic_error(null, "El argumento del índice está debe de ser de tipo int, en cambio se ingresó el tipo " + typeArgAux[0]);
         } else {
             String temp = parser.nuevoTemporal();
-            parser.codigoIntermedio.add(new ArrayIndexLoad(nameAux, typeArgAux[0], temp));
+            parser.codigoIntermedio.add(new ArrayIndexLoad(nameAux, typeArgAux[1], temp));
             RESULT = new String[] { "int", nameAux };
         }
     }
@@ -1499,18 +1499,12 @@ func_call ::=
 
 
 // **********************************************************************************************************************************
-arg_list ::= expr:type COMMA
-{:
-    if(ActualTable != null && type != null){
-        String[] typeAux = (String[]) type;
-        parser.codigoIntermedio.add(new ParamAsign(typeAux[1], typeAux[0]));
-    }
-:}
-    arg_list:types
+arg_list ::= expr:type COMMA arg_list:types
 {:
     if(ActualTable != null && type != null && types != null){
         String typesAux = types.toString();
         String[] typeAux = (String[]) type;
+        parser.codigoIntermedio.add(new ParamAsign(typeAux[1], typeAux[0]));
         RESULT = typeAux[0] + " " + typesAux;
     }
 :}

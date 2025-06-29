@@ -8,12 +8,12 @@ package com.mipstranslator;
  *
  * @author andre
  */
-public class InstruccionRegistroTemporalFlotante implements InstruccionMIPS{
+public class InstruccionAsignacionLiteralFlotante implements InstruccionMIPS{
     private String RegistroEntero;
     private String RegistroFlotante;
     private String Valor;
     
-    public InstruccionRegistroTemporalFlotante(String registroEntero, String registroFlotante, String valor){
+    public InstruccionAsignacionLiteralFlotante(String registroEntero, String registroFlotante, String valor){
         RegistroEntero = registroEntero;
         RegistroFlotante = registroFlotante;
         Valor = valor;
@@ -22,7 +22,7 @@ public class InstruccionRegistroTemporalFlotante implements InstruccionMIPS{
     public String toString(){
         String mensaje = "";
         mensaje += "li $" + RegistroEntero + ", " + Valor + "\n";
-        mensaje += "mtc1 $" + RegistroEntero + ", $" + RegistroFlotante + "\n";
+        mensaje += "mtc1 " +  RegistroEntero + ", " + RegistroFlotante + "\n";
         return mensaje;
     }
 }
