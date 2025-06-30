@@ -3,11 +3,15 @@ package com.compiler.oliaccompiler;
 import com.lexicalanalyzer.MiLexer;
 import com.lexicalanalyzer.parser;
 import java.io.BufferedReader;
+import com.mipstranslator.TablaStrings;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -53,8 +57,12 @@ public class OLIACCOMPILER implements Runnable {
                 // Guardar código MIPS
                 System.out.println("--- crea el archivo mips" + output.getPath() + " ---");
                 String rutaMIPS = "codigo_mips.asm";
+                
                 try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaMIPS)) {
                     writer.print(codigoMIPS);
+                    writer.write(TablaStrings.generarSeccionData()); // .data
+                    writer.write("\n.text\n"); // .text
+
                     System.out.println("--- Código MIPS generado exitosamente en: " + rutaMIPS + " ---");
                 }
             } catch (Exception e) {
