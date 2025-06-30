@@ -6,6 +6,8 @@ import java.util.List;
 public class AnalizadorCodigoIntermedio {
 
     private List<InstruccionMIPS> instrucciones;
+    public static AdministradorRegistrosEnteros registrosEnteros = new AdministradorRegistrosEnteros();
+    public static AdministradorRegistrosFlotantes registrosFlotantes = new AdministradorRegistrosFlotantes();
 
     public AnalizadorCodigoIntermedio(List<String> lineas) {
         instrucciones = new ArrayList<>();
@@ -21,6 +23,13 @@ public class AnalizadorCodigoIntermedio {
                 instrucciones.add(new InstruccionCall(linea));
                 continue;
             }
+
+            if (linea.startsWith("return ")) {
+                instrucciones.add(new InstruccionReturn(linea));
+                continue;
+            }
+
+
 
             // Otras detecciones de instrucciones específicas van aquí...
 
