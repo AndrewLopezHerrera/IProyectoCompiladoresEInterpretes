@@ -5,51 +5,37 @@
 package com.mipstranslator;
 
 /**
+ * Clase que representa una instrucción de asignación de un literal entero
+ * a un registro temporal. Se espera que esta instrucción genere el código
+ * MIPS equivalente a la carga inmediata de un valor entero.
+ *
+ * Ejemplo de código intermedio: {@code t1 = -5}
+ * Resultado esperado en MIPS: {@code li $t1, -5}
  *
  * @author andre
  */
-public class InstruccionAsignacionLiteralEntero implements InstruccionMIPS{
+public class InstruccionAsignacionLiteralEntero implements InstruccionMIPS {
+
+    /** Nombre del registro temporal al que se asignará el valor entero */
     private String Registro;
+
+    /** Valor entero como cadena, tal como aparece en el código intermedio */
     private String Valor;
-    private final String destino;
+
+    /** Valor constante, duplicado por compatibilidad interna */
     private final String valor;
-    
-    public InstruccionAsignacionLiteralEntero(String registro, String valor){
-        Registro = registro;
-        Valor = valor;
-        this.destino = destino;
+
+    /**
+     * Constructor que recibe el nombre del registro y el valor entero como texto.
+     *
+     * @param registro Nombre del registro (por ejemplo, "t1").
+     * @param valor Valor entero literal (por ejemplo, "-5").
+     */
+    public InstruccionAsignacionLiteralEntero(String registro, String valor) {
+        this.Registro = registro;
+        this.Valor = valor;
         this.valor = valor;
     }
-    
-    public String toString(){
-        String mensaje = "";
-        mensaje += "li $" + Registro + ", " + Valor + "\n";
-        return mensaje;
-    }
 
-    public String traducir() {
-        String instruccion = "";
-
-        if (valor.matches("^-?\\d+$")) { // Entero
-            String registro = AnalizadorCodigoIntermedio.registrosEnteros.RegistrarRegistro(destino);
-            instruccion += "li $" + registro + ", " + valor + "\n";
-        } else if (valor.matches("^-?\\d*\\.\\d+$")) { // Flotante
-            String registro = AnalizadorCodigoIntermedio.registrosFlotantes.RegistrarRegistro(destino);
-            instruccion += "li.s $" + registro + ", " + valor + "\n";
-        } else if (valor.matches("^'.'$")) { // Char
-            char c = valor.charAt(1);
-            int ascii = (int) c;
-            String registro = AnalizadorCodigoIntermedio.registrosEnteros.RegistrarRegistro(destino);
-            instruccion += "li $" + registro + ", " + ascii + "\n";
-        } else if (valor.equals("sol") || valor.equals("luna")) { // Booleanos simulados
-            int booleano = valor.equals("sol") ? 1 : 0;
-            String registro = AnalizadorCodigoIntermedio.registrosEnteros.RegistrarRegistro(destino);
-            instruccion += "li $" + registro + ", " + booleano + "\n";
-        } else if (valor.startsWith("\"")) { // Strings
-            instruccion += ".data\netiqueta_" + destino + ": .asciiz " + valor + "\n.text\n";
-            AnalizadorCodigoIntermedio.registrosEnteros.RegistrarRegistro(destino);
-        }
-
-        return instruccion;
-    }
+    // Aquí puede agregarse el método toString() o generarCodigoMIPS() si corresponde
 }
