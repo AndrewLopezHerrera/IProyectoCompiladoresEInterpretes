@@ -18,6 +18,7 @@ public class AdministradorRegistrosEnteros {
     private Map<String, String> UsoDeRegistros;
     private int RegistroActual;
     
+    
     public AdministradorRegistrosEnteros(){
         UsoDeRegistros = new HashMap<>();
         Registros = new ArrayList<>();
