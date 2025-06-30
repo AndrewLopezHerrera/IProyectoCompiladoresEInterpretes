@@ -2845,9 +2845,9 @@ class CUP$parser$actions {
         TablaDeSimbolos table = new TablaDeSimbolos(ActualTable, "do_while");
         ActualTable.AgregarHijo(table);
         ActualTable = table;
-        String etiquedaInicio = nuevaEtiqueta("do-while_inicio");
-        String etiquedaIntermedia = nuevaEtiqueta("do-while_intermedio");
-        String etiquetaFin = nuevaEtiqueta("do-while_final");
+        String etiquedaInicio = nuevaEtiqueta("do_while_inicio");
+        String etiquedaIntermedia = nuevaEtiqueta("do_while_intermedio");
+        String etiquetaFin = nuevaEtiqueta("do_while_final");
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaInicio));
         parser.codigoIntermedio.add(new EtiquetaInstr(etiquedaIntermedia));
         PilaIteradores.add(new EtiquetaEstructura(etiquedaInicio, etiquedaIntermedia, etiquetaFin));
@@ -2989,8 +2989,8 @@ class CUP$parser$actions {
         }
 
         // Agregar instruccion intermedia para return
-        parser.codigoIntermedio.add(new ReturnInstr(valorReturn));
-        ActualTable.agregarInstruccion(new ReturnInstr(valorReturn));
+        parser.codigoIntermedio.add(new ReturnInstr(valorReturn, typeReturn[0]));
+        ActualTable.agregarInstruccion(new ReturnInstr(valorReturn, typeReturn[0]));
     }
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("return_stmt",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -3167,7 +3167,7 @@ class CUP$parser$actions {
 		int nameright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object name = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
-    ParamAsign.getIndex();
+    ParamAsign.restartIndex();
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$11",51, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -3195,8 +3195,8 @@ class CUP$parser$actions {
             if (argsFunction.equals(argsCall)) {
                 // Generar codigo intermedio para la llamada a funcion
                 String temp = parser.nuevoTemporal();
-                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
-                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, function.getTipo(), temp, ParamAsign.getIndex()));
+                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, function.getTipo(), temp, ParamAsign.getIndex()));
                 RESULT = new String[]{ function.getTipo(), temp };
             } else {
                 semantic_error(null, "La funcion " + nameCall +
@@ -3231,9 +3231,10 @@ class CUP$parser$actions {
             String argsFunction = function.getArguments();
             if (argsFunction.equals(argsCall)) {
                 // Generar codigo intermedio para la llamada a funcion
+                ParamAsign.restartIndex();
                 String temp = parser.nuevoTemporal();
-                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
-                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, temp, ParamAsign.getIndex()));
+                parser.codigoIntermedio.add(new LlamadaFuncionInstr(nameCall, function.getTipo(), temp, ParamAsign.getIndex()));
+                ActualTable.agregarInstruccion(new LlamadaFuncionInstr(nameCall, function.getTipo(), temp, ParamAsign.getIndex()));
                 RESULT = new String[]{ function.getTipo(), temp };
             } else {
                 semantic_error(null, "La funcion " + nameCall +

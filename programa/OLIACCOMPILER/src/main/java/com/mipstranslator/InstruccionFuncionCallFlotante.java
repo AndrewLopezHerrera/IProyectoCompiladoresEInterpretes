@@ -6,18 +6,19 @@ package com.mipstranslator;
 
 /**
  *
- * @author males
+ * @author andre
  */
-
-public class InstruccionFuncionCall implements InstruccionMIPS {
+public class InstruccionFuncionCallFlotante implements InstruccionMIPS {
     private String nombreFuncion;
     private String cantidadParametros;
+    private String Destino;
 
-    public InstruccionFuncionCall(String nombreFuncion, String cantidadParametros) {
+    public InstruccionFuncionCallFlotante(String nombreFuncion, String cantidadParametros, String destino) {
         this.nombreFuncion = nombreFuncion;
         Integer cantidad = Integer.parseInt(cantidadParametros) + 1;
         cantidad = cantidad * 4;
         this.cantidadParametros = cantidad.toString();
+        this.Destino = destino;
     }
 
     @Override
@@ -27,6 +28,7 @@ public class InstruccionFuncionCall implements InstruccionMIPS {
         mensaje += "jal " + nombreFuncion + "\n";
         mensaje += "addi $sp, $sp, " + cantidadParametros + "\n";
         mensaje += "lw $fp, -4($sp)\n";
+        mensaje += "mov.s $" + Destino + ", $f0";
         return mensaje;
     }
 }

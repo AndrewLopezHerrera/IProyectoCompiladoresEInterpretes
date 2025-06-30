@@ -323,6 +323,7 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
     private List<String> argumentos;
     private String destino;
     private int CantidadParametros;
+    private String Tipo;
 
     /**
      * Constructor de la instruccion de llamada a funcion.
@@ -331,11 +332,12 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
      * @param argumentos Lista de argumentos que se pasan a la funcion
      * @param destino    Nombre del temporal que almacenara el resultado
      */
-    public LlamadaFuncionInstr(String nombre, String destino, int cantidadParametros) {
+    public LlamadaFuncionInstr(String nombre, String tipo, String destino, int cantidadParametros) {
         this.nombre = nombre;
         this.argumentos = argumentos;
         this.destino = destino;
         this.CantidadParametros = cantidadParametros;
+        this.Tipo = tipo;
     }
 
     /**
@@ -345,7 +347,7 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
      */
     @Override
     public String toString() {
-        return destino + " = call " + nombre + ", " + CantidadParametros;
+        return destino + " = call " + Tipo + " " + nombre + ", " + CantidadParametros;
     }
 }
 
@@ -354,14 +356,16 @@ class LlamadaFuncionInstr extends InstruccionIntermedia {
  */
 class ReturnInstr extends InstruccionIntermedia {
     private String valor;
+    private String Tipo;
 
     /**
      * Constructor de la instruccion de retorno.
      * 
      * @param valor Valor que sera retornado por la funcion
      */
-    public ReturnInstr(String valor) {
+    public ReturnInstr(String valor, String tipo) {
         this.valor = valor;
+        this.Tipo = tipo;
     }
 
     /**
@@ -371,7 +375,7 @@ class ReturnInstr extends InstruccionIntermedia {
      */
     @Override
     public String toString() {
-        return "return " + valor;
+        return "return " + Tipo + " " + valor;
     }
 }
 

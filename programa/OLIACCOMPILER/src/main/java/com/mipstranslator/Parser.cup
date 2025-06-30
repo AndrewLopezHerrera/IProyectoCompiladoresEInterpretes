@@ -252,37 +252,37 @@ temporal ::= TEMP:temp
 tipo ::= INT:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "int";
     }
 :}
       | FLOAT:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "float";
     }
 :}
       | BOOLEAN:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "boolean";
     }
 :}
       | CHAR:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "char";
     }
 :}
       | STRING:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "string";
     }
 :}
       |INTARRAY:tipo
 {:
     if(tipo != null){
-        RESULT = tipo.toString();
+        RESULT = "intArray";
     }
 :};
 
@@ -457,18 +457,45 @@ parametroSalida ::= PARAM tipo:nombreTipoAux temporal:tempAux
     }
 :};
 
-llamadaFuncionConAsignacion ::= temporal ASSIGN CALL identificador:nombre COMMA INT_LITERAL:cantidad
+llamadaFuncionConAsignacion ::= temporal:tempAux ASSIGN CALL tipo:nombreTipoAux identificador:nombre COMMA INT_LITERAL:cantidad
 {:
-    if(nombre != null && cantidad != null && TablaActual != null){
+    if(tempAux != null && nombreTipoAux != null && nombre != null && cantidad != null && TablaActual != null){
         ContadorParametrosSalida = 1;
         String nombreFuncion = nombre.toString();
         String cantParametros = cantidad.toString();
-        InstruccionMIPS instruccion = new InstruccionFuncionCall(nombreFuncion, cantParametros);
-        TablaActual.AgregarInstruccion(instruccion);
+        String nombreTipo = nombreTipoAux.toString();
+        String temp = tempAux.toString();
+        if(nombreTipo.equals("float")){
+            String temporalMIPS = AdminFlotante.RegistrarRegistro(temp);
+            InstruccionMIPS instruccion = new InstruccionFuncionCallFlotante(nombreFuncion, cantParametros, temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String temporalMIPS = AdminEntero.RegistrarRegistro(temp);
+            InstruccionMIPS instruccion = new InstruccionFuncionCallEntero(nombreFuncion, cantParametros, temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
     }
 :};
 
-retorno ::= RETURN temporal;
+retorno ::= RETURN tipo:nombreTipoAux temporal:tempAux
+{:
+    if(tempAux != null && nombreTipoAux != null && TablaActual != null){
+        ContadorParametrosSalida = 1;
+        String nombreTipo = nombreTipoAux.toString();
+        String temp = tempAux.toString();
+        if(nombreTipo.equals("float")){
+            String temporalMIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
+            InstruccionMIPS instruccion = new InstruccionRetornoFlotante(temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+        else{
+            String temporalMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+            InstruccionMIPS instruccion = new InstruccionRetornoEntero(temporalMIPS);
+            TablaActual.AgregarInstruccion(instruccion);
+        }
+    }
+:};
 
 // === Operaciones ===
 expresion ::= temporal:tempDestinoAux ASSIGN temporal:tempAux1 ADD temporal:tempAux2

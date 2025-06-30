@@ -59,9 +59,7 @@ public class OLIACCOMPILER implements Runnable {
                 String rutaMIPS = "codigo_mips.asm";
                 
                 try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaMIPS)) {
-                    writer.print(codigoMIPS);
-                    writer.write(TablaStrings.generarSeccionData()); // .data
-                    writer.write("\n.text\n"); // .text
+                    writer.print(codigoMIPS); // .text
 
                     System.out.println("--- Código MIPS generado exitosamente en: " + rutaMIPS + " ---");
                 }

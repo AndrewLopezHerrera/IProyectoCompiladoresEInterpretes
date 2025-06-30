@@ -25,7 +25,7 @@ public class TablaSimbolos {
         Instrucciones = new ArrayList<>();
         Nombre = nombre;
         MemoriaParametros = 0;
-        MemoriaVariables = 4;
+        MemoriaVariables = 8;
         Padre = padre;
     }
     
