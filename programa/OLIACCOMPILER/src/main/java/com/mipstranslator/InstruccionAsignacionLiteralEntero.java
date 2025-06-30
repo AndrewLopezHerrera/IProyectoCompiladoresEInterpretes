@@ -19,7 +19,7 @@ public class InstruccionAsignacionLiteralEntero implements InstruccionMIPS{
     
     public String toString(){
         String mensaje = "";
-        mensaje += "li $" + Registro + ", " + Valor + "\n";
+        mensaje += "li $" + Registro + ", " + Valor;
         return mensaje;
     }
 }

@@ -24,31 +24,31 @@ public class TablaSimbolos {
         Variables = new HashMap<>();
         Instrucciones = new ArrayList<>();
         Nombre = nombre;
-        MemoriaParametros = 8;
-        MemoriaVariables = 0;
+        MemoriaParametros = 0;
+        MemoriaVariables = 4;
         Padre = padre;
     }
     
     public void AgregarVariable(LineaTabla linea){
         Variables.put(linea.getNombre(), linea);
-        linea.setDireccionRelativa(MemoriaParametros * -1);
-        MemoriaParametros += 4;
+        linea.setDireccionRelativa(MemoriaVariables * -1);
+        MemoriaVariables += 4;
     }
     
     public void AgregarParametro(LineaTabla linea){
         Variables.put(linea.getNombre(), linea);
-        linea.setDireccionRelativa(MemoriaVariables);
-        MemoriaVariables += 4;
+        linea.setDireccionRelativa(MemoriaParametros);
+        MemoriaParametros += 4;
     }
     
     public String toString() {
         String mensaje = "";
-        mensaje += "move $fp, $sp\n";
         mensaje += Nombre + ":\n";
-        mensaje += "addi $sp, $sp, -" + MemoriaParametros + "\n";
-        mensaje += "sw $ra, -4($sp)\n";
+        mensaje += "move $fp, $sp\n";
+        mensaje += "addi $sp, $sp, -" + MemoriaVariables + "\n";
+        mensaje += "sw $ra, -4($fp)\n";
         for(InstruccionMIPS instruccion : Instrucciones){
-            mensaje += instruccion.toString();
+            mensaje += instruccion.toString() + "\n";
         }
         return mensaje;
     }

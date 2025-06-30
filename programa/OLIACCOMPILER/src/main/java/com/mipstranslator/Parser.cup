@@ -7,6 +7,10 @@ parser code {:
     private ArrayList<String> codigoIntermedio = new ArrayList<>();
     private TablaSimbolos TablaActual = null;
 
+    private Integer LineaCodigoIntermedio = 1;
+
+    private Integer ContadorParametrosSalida = 1;
+
     private AdministradorRegistrosFlotantes AdminFlotante = new AdministradorRegistrosFlotantes();
     private AdministradorRegistrosEnteros AdminEntero = new AdministradorRegistrosEnteros();
 
@@ -20,15 +24,10 @@ parser code {:
         TablaActual = nuevaTabla;
     }
 
-    public void traducirACodigoMIPS(String rutaArchivo) {
-        AnalizadorCodigoIntermedio analizador = new AnalizadorCodigoIntermedio(this.codigoIntermedio);
+    public String traducirACodigoMIPS() {
+        AnalizadorCodigoIntermedio analizador = new AnalizadorCodigoIntermedio(Data, Tablas);
         String codigoMIPS = analizador.generarCodigoMIPS();
-
-        try (java.io.PrintWriter writer = new java.io.PrintWriter(rutaArchivo)) {
-            writer.print(codigoMIPS);
-        } catch (java.io.IOException e) {
-            System.err.println("Error al escribir el archivo MIPS: " + e.getMessage());
-        }
+        return codigoMIPS;
     }
 
     private void AsignarEnteroTemporal(String temporalIntermedio, String entero){
@@ -69,15 +68,26 @@ parser code {:
         String nombre = "msg" + Data.size();
         InstruccionMIPS declaracionDato = new InstruccionAsignarStringData(nombre, string);
         Data.add(declaracionDato.toString());
-        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralEntero(temporalMIPS, nombre);
+        InstruccionMIPS instruccion = new InstruccionAsignacionLiteralString(temporalMIPS, nombre);
         TablaActual.AgregarInstruccion(instruccion);
-    } 
+    }
+
+    /**
+     * Maneja errores sintacticos encontrados por el parser
+     * @param s simbolo donde ocurrio el error
+     */
+    public void syntax_error(Symbol s) {
+        if (s != null) {
+            System.out.println("Error sintactico en la linea " + (s.left + 1) +
+            ", columna " + (s.right + 1) + ": " + s.value);
+        }
+    }
 :}
 
 // === Terminales ===
 terminal INT_LITERAL, FLOAT_LITERAL, BOOLEAN_LITERAL, STRING_LITERAL, CHAR_LITERAL;
-terminal TEMP, ID;
-terminal INT, FLOAT, BOOLEAN, CHAR, STRING;
+terminal TEMP, ID, FUNCION;
+terminal INT, FLOAT, BOOLEAN, CHAR, STRING, INTARRAY;
 terminal POW, ADD, SUB, MUL, DIV, MOD;
 terminal AND, OR, NOT;
 terminal EQ, NEQ, LE, LT, GE, GT;
@@ -91,7 +101,7 @@ terminal COLON;
 non terminal programa, bloqueInstrucciones;
 non terminal instruccion, expresion, tipo, literal, identificador, temporal;
 non terminal declaracion, asignacion, declaracionArreglo, copiaArreglo, guardarEnArreglo, cargarDeArreglo;
-non terminal llamadaFuncion, parametroEntrada, parametroSalida, retorno;
+non terminal parametroEntrada, parametroSalida, retorno, inicioFuncion;
 non terminal escritura, lectura;
 non terminal instruccionCondicional, instruccionGoto, etiqueta;
 non terminal numeros;
@@ -103,10 +113,17 @@ start with programa;
 // === Reglas ===
 programa ::= bloqueInstrucciones;
 
-bloqueInstrucciones ::= instruccion bloqueInstrucciones
-                      | instruccion;
+bloqueInstrucciones ::= instruccion {:
+    System.out.println(LineaCodigoIntermedio);
+    LineaCodigoIntermedio++;
+:} bloqueInstrucciones
+                      | instruccion{:
+    System.out.println(LineaCodigoIntermedio);
+    LineaCodigoIntermedio++;
+:};
 
-instruccion ::= declaracion
+instruccion ::= 
+                declaracion
               | asignacion
               | declaracionArreglo
               | guardarEnArreglo
@@ -114,7 +131,6 @@ instruccion ::= declaracion
               | copiaArreglo
               | escritura
               | lectura
-              | llamadaFuncion
               | llamadaFuncionConAsignacion
               | retorno
               | instruccionGoto
@@ -122,7 +138,9 @@ instruccion ::= declaracion
               | etiqueta
               | parametroEntrada
               | parametroSalida
-              | expresion;
+              | expresion
+              | inicioFuncion
+              | error;
 
 // === Declaraciones y asignaciones ===
 declaracion ::=
@@ -185,12 +203,12 @@ asignacion ::=
         String temporal = "";
         InstruccionMIPS instruccion = null;
         if(linea.getTipo().equals("float")){
-            temporal = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
-            instruccion = new InstruccionCargarEnPilaFlotante(temporal, linea.getDireccionRelativa().toString());
+            temporal = AdminFlotante.RegistrarRegistro(temp);
+            instruccion = new InstruccionTraerDePilaFlotante(temporal, linea.getDireccionRelativa().toString());
         }
         else{
-            temporal = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
-            instruccion = new InstruccionCargarEnPilaEntero(temporal, linea.getDireccionRelativa().toString());
+            temporal = AdminEntero.RegistrarRegistro(temp);
+            instruccion = new InstruccionTraerDePilaEntero(temporal, linea.getDireccionRelativa().toString());
         }
         TablaActual.AgregarInstruccion(instruccion);
     }
@@ -199,8 +217,7 @@ asignacion ::=
 {:
     if(tempAux != null && TablaActual != null){
         String temp = tempAux.toString();
-        String tempMIPS = AdminEntero.RegistrarRegistro(temp);
-        InstruccionCrearArreglo instruccion = new InstruccionCrearArreglo(AdminEntero, "0", tempMIPS);
+        InstruccionCrearArreglo instruccion = new InstruccionCrearArreglo(AdminEntero, "0", temp);
         TablaActual.AgregarInstruccion(instruccion);
         InstruccionArregloActual = instruccion;
     }
@@ -213,7 +230,12 @@ numeros ::= INT_LITERAL:numeroAux
         InstruccionArregloActual.AgregarNumero(numeroAux.toString());
     }
 :} COMMA numeros
-            | ;
+            | INT_LITERAL:numeroAux
+{:
+    if(TablaActual != null && numeroAux != null){
+        InstruccionArregloActual.AgregarNumero(numeroAux.toString());
+    }
+:};
 
 identificador ::= ID:name
 {:
@@ -252,6 +274,12 @@ tipo ::= INT:tipo
     }
 :}
       | STRING:tipo
+{:
+    if(tipo != null){
+        RESULT = tipo.toString();
+    }
+:}
+      |INTARRAY:tipo
 {:
     if(tipo != null){
         RESULT = tipo.toString();
@@ -331,7 +359,7 @@ cargarDeArreglo ::= LOAD temporal:tempAux COMMA identificador:idAux LBRACK tempo
         String temp = tempAux.toString();
         String indice = indiceAux.toString();
         LineaTabla linea = TablaActual.ObtenerVariable(id);
-        String valorCargar = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        String valorCargar = AdminEntero.RegistrarRegistro(temp);
         String valorIndice = AdminEntero.ObtenerRegistroMIPSDeIntermedio(indice);
         InstruccionMIPS instruccion = new CargarDeArreglo(linea.getDireccionRelativa().toString(), valorIndice, valorCargar);
         TablaActual.AgregarInstruccion(instruccion);
@@ -390,12 +418,12 @@ lectura ::= READ_INT temporal:tempAux
     if(tempAux != null && TablaActual != null){
         String temp = tempAux.toString();
         String valorImprimir = AdminFlotante.RegistrarRegistro(temp);
-        InstruccionMIPS instruccion = new InstruccionLeerEntero(valorImprimir);
+        InstruccionMIPS instruccion = new InstruccionLeerFlotante(valorImprimir);
         TablaActual.AgregarInstruccion(instruccion);
     }
 :};
 
-parametroEntrada ::= PARAM tipo:nombreTipoAux identificador:idAux
+parametroEntrada ::= PARAM INT_LITERAL:numero tipo:nombreTipoAux identificador:idAux
 {:
     if(nombreTipoAux != null && idAux != null && TablaActual != null){
         String nombreTipo = nombreTipoAux.toString();
@@ -405,37 +433,40 @@ parametroEntrada ::= PARAM tipo:nombreTipoAux identificador:idAux
     }
 :};
 
-parametroSalida ::= PARAM INT_LITERAL:numero tipo:nombreTipoAux temporal:tempAux
+parametroSalida ::= PARAM tipo:nombreTipoAux temporal:tempAux
 {:
-    if(nombreTipoAux != null && tempAux != null && TablaActual != null && numero != null){
+    if(nombreTipoAux != null && tempAux != null && TablaActual != null){
         String nombreTipo = nombreTipoAux.toString();
         String temp = tempAux.toString();
-        String numeroString = numero.toString();
+        if(ContadorParametrosSalida == 1){
+            InstruccionMIPS instruccion = new InstruccionParametroSalidaEntero(ContadorParametrosSalida.toString(), "fp");
+            TablaActual.AgregarInstruccion(instruccion);
+            ContadorParametrosSalida++;
+        }
         if(nombreTipo.equals("float")){
             String temporalMIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp);
-            InstruccionMIPS instruccion = new InstruccionParametroSalidaEntero(numeroString, temporalMIPS);
+            InstruccionMIPS instruccion = new InstruccionParametroSalidaFlotante(ContadorParametrosSalida.toString(), temporalMIPS);
             TablaActual.AgregarInstruccion(instruccion);
         }
         else{
             String temporalMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
-            InstruccionMIPS instruccion = new InstruccionParametroSalidaFlotante(numeroString, temporalMIPS);
+            InstruccionMIPS instruccion = new InstruccionParametroSalidaEntero(ContadorParametrosSalida.toString(), temporalMIPS);
             TablaActual.AgregarInstruccion(instruccion);
         }
+        ContadorParametrosSalida++;
     }
 :};
 
-llamadaFuncion ::= CALL ID:nombre COMMA INT_LITERAL:cantidad
+llamadaFuncionConAsignacion ::= temporal ASSIGN CALL identificador:nombre COMMA INT_LITERAL:cantidad
 {:
     if(nombre != null && cantidad != null && TablaActual != null){
+        ContadorParametrosSalida = 1;
         String nombreFuncion = nombre.toString();
         String cantParametros = cantidad.toString();
         InstruccionMIPS instruccion = new InstruccionFuncionCall(nombreFuncion, cantParametros);
         TablaActual.AgregarInstruccion(instruccion);
     }
 :};
-
-
-llamadaFuncionConAsignacion ::= temporal ASSIGN CALL ID COMMA INT_LITERAL;
 
 retorno ::= RETURN temporal;
 
@@ -561,7 +592,7 @@ expresion ::= temporal:tempDestinoAux ASSIGN temporal:tempAux1 ADD temporal:temp
             String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
             String temp1MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp1);
             String temp2MIPS = AdminFlotante.ObtenerRegistroMIPSDeIntermedio(temp2);
-            InstruccionMIPS instruccion = new InstruccionOperacionMatematica("c.eq.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            InstruccionMIPS instruccion = new InstruccionComparacionFlotante("c.eq.s", tempDestinoMIPS, temp1MIPS, temp2MIPS);
             TablaActual.AgregarInstruccion(instruccion);
         }
     }
@@ -600,7 +631,7 @@ expresion ::= temporal:tempDestinoAux ASSIGN temporal:tempAux1 ADD temporal:temp
             String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
             String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
             String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
-            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp1MIPS, temp2MIPS);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp2MIPS, temp1MIPS);
             TablaActual.AgregarInstruccion(instruccion1);
             InstruccionMIPS instruccion2 = new InstruccionComparacionEnteroSecundario("xori", tempDestinoMIPS, tempDestinoMIPS, "1");
             TablaActual.AgregarInstruccion(instruccion2);
@@ -646,7 +677,7 @@ expresion ::= temporal:tempDestinoAux ASSIGN temporal:tempAux1 ADD temporal:temp
             String tempDestinoMIPS = AdminEntero.RegistrarRegistro(tempDestino);
             String temp1MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp1);
             String temp2MIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp2);
-            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp2MIPS, temp1MIPS);
+            InstruccionMIPS instruccion1 = new InstruccionComparacionEntero("slt", tempDestinoMIPS, temp1MIPS, temp2MIPS);
             TablaActual.AgregarInstruccion(instruccion1);
             InstruccionMIPS instruccion2 = new InstruccionComparacionEnteroSecundario("xori", tempDestinoMIPS, tempDestinoMIPS, "1");
             TablaActual.AgregarInstruccion(instruccion2);
@@ -728,7 +759,8 @@ instruccionCondicional ::= IF temporal:tempAux GOTO identificador:idAux
     if(tempAux != null && idAux != null && TablaActual != null){
         String temp = tempAux.toString();
         String id = idAux.toString();
-        InstruccionMIPS instruccion = new InstruccionIfGoto(temp, id);
+        String tempDestinoMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionIfGoto(tempDestinoMIPS, id);
         TablaActual.AgregarInstruccion(instruccion);
     }
 :}
@@ -737,7 +769,8 @@ instruccionCondicional ::= IF temporal:tempAux GOTO identificador:idAux
     if(tempAux != null && idAux != null && TablaActual != null){
         String temp = tempAux.toString();
         String id = idAux.toString();
-        InstruccionMIPS instruccion = new InstruccionIfFalseGoto(temp, id);
+        String tempDestinoMIPS = AdminEntero.ObtenerRegistroMIPSDeIntermedio(temp);
+        InstruccionMIPS instruccion = new InstruccionIfFalseGoto(tempDestinoMIPS, id);
         TablaActual.AgregarInstruccion(instruccion);
     }
 :};
@@ -757,5 +790,14 @@ etiqueta ::= identificador:idAux COLON
         String id = idAux.toString();
         InstruccionMIPS instruccion = new InstruccionEtiqueta(id);
         TablaActual.AgregarInstruccion(instruccion);
+    }
+:};
+
+inicioFuncion ::= FUNCION identificador:idAux COLON
+{:
+    if(idAux != null){
+        TablaSimbolos tabla = new TablaSimbolos(idAux.toString(), null);
+        TablaActual = tabla;
+        Tablas.add(tabla);
     }
 :};

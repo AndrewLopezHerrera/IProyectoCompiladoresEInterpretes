@@ -43,6 +43,6 @@ public class InstruccionCall implements InstruccionMIPS {
     public String toString() {
         return """
             # Llamada a función
-            jal """ + " " + nombreFuncion + "   # Jump and link (CALL)\n";
+            jal """ + " " + nombreFuncion + "   # Jump and link (CALL)";
     }
 }

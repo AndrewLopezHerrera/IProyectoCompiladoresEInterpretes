@@ -19,7 +19,7 @@ public class InstruccionLeerFlotante implements InstruccionMIPS{
         String mensaje = "";
         mensaje += "li $v0, 6\n";
         mensaje += "syscall\n";
-        mensaje += "move.s $" + Temporal + ", $f0\n";
+        mensaje += "mov.s $" + Temporal + ", $f0";
         return mensaje;
     }
 }

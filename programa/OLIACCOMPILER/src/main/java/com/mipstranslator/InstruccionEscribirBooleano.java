@@ -30,7 +30,7 @@ public class InstruccionEscribirBooleano implements InstruccionMIPS{
         mensaje += "la $a0, msg_sol\n";
         mensaje += "li $v0, 4\n";
         mensaje += "syscall\n";
-        mensaje += "end_print" + NumeroCondicion + "\n";
+        mensaje += "end_print" + NumeroCondicion;
         return mensaje;
     }
 }

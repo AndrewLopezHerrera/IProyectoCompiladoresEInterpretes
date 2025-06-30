@@ -14,7 +14,7 @@ public class LineaTabla {
     private int DireccionRelativa;
     
     public LineaTabla(String nombre, String tipo, int direccion){
-        Nombre = Tipo;
+        Nombre = nombre;
         Tipo = tipo;
         DireccionRelativa = direccion;
     }

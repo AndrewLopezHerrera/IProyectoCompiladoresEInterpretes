@@ -24,7 +24,7 @@ public class InstruccionOperacionMatematica implements InstruccionMIPS{
     @Override
     public String toString() {
         String mensaje = "";
-        mensaje += Instruccion + " $" + Destino + ", $" + TempUno + ", $ " + TempDos;
+        mensaje += Instruccion + " $" + Destino + ", $" + TempUno + ", $" + TempDos;
         return mensaje;
     }
 

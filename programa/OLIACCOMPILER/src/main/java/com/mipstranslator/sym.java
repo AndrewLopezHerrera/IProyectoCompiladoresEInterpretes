@@ -8,55 +8,57 @@ package com.mipstranslator;
 /** CUP generated class containing symbol constants. */
 public class sym {
   /* terminals */
-  public static final int POW = 14;
+  public static final int POW = 16;
   public static final int STRING_LITERAL = 5;
-  public static final int CHAR = 12;
-  public static final int GE = 27;
+  public static final int CHAR = 13;
+  public static final int GE = 29;
   public static final int CHAR_LITERAL = 6;
-  public static final int WRITE_STRING = 47;
-  public static final int LOAD = 34;
-  public static final int STORE = 35;
-  public static final int INT = 9;
-  public static final int IFFALSE = 42;
-  public static final int PARAM = 37;
+  public static final int WRITE_STRING = 49;
+  public static final int LOAD = 36;
+  public static final int STORE = 37;
+  public static final int FUNCION = 9;
+  public static final int INT = 10;
+  public static final int IFFALSE = 44;
+  public static final int PARAM = 39;
   public static final int BOOLEAN_LITERAL = 4;
-  public static final int NOT = 22;
-  public static final int AND = 20;
-  public static final int COPY = 36;
-  public static final int LT = 26;
-  public static final int WRITE_INT = 45;
-  public static final int OR = 21;
-  public static final int COMMA = 33;
-  public static final int CALL = 38;
-  public static final int DIV = 18;
-  public static final int IF = 41;
-  public static final int ASSIGN = 29;
+  public static final int NOT = 24;
+  public static final int AND = 22;
+  public static final int COPY = 38;
+  public static final int LT = 28;
+  public static final int WRITE_INT = 47;
+  public static final int OR = 23;
+  public static final int COMMA = 35;
+  public static final int CALL = 40;
+  public static final int DIV = 20;
+  public static final int IF = 43;
+  public static final int ASSIGN = 31;
   public static final int ID = 8;
-  public static final int LE = 25;
+  public static final int LE = 27;
+  public static final int INTARRAY = 15;
   public static final int EOF = 0;
-  public static final int BOOLEAN = 11;
-  public static final int READ_FLOAT = 44;
-  public static final int RETURN = 39;
+  public static final int BOOLEAN = 12;
+  public static final int READ_FLOAT = 46;
+  public static final int RETURN = 41;
   public static final int TEMP = 7;
   public static final int error = 1;
-  public static final int MUL = 17;
-  public static final int PIPE = 32;
-  public static final int ADD = 15;
-  public static final int MOD = 19;
-  public static final int NEQ = 24;
-  public static final int EQ = 23;
-  public static final int LBRACK = 30;
-  public static final int COLON = 49;
-  public static final int WRITE_FLOAT = 46;
-  public static final int READ_INT = 43;
-  public static final int RBRACK = 31;
-  public static final int GOTO = 40;
-  public static final int WRITE_BOOLEAN = 48;
-  public static final int FLOAT = 10;
-  public static final int STRING = 13;
+  public static final int MUL = 19;
+  public static final int PIPE = 34;
+  public static final int ADD = 17;
+  public static final int MOD = 21;
+  public static final int NEQ = 26;
+  public static final int EQ = 25;
+  public static final int LBRACK = 32;
+  public static final int COLON = 51;
+  public static final int WRITE_FLOAT = 48;
+  public static final int READ_INT = 45;
+  public static final int RBRACK = 33;
+  public static final int GOTO = 42;
+  public static final int WRITE_BOOLEAN = 50;
+  public static final int FLOAT = 11;
+  public static final int STRING = 14;
   public static final int FLOAT_LITERAL = 3;
-  public static final int GT = 28;
-  public static final int SUB = 16;
+  public static final int GT = 30;
+  public static final int SUB = 18;
   public static final int INT_LITERAL = 2;
   public static final String[] terminalNames = new String[] {
   "EOF",
@@ -68,11 +70,13 @@ public class sym {
   "CHAR_LITERAL",
   "TEMP",
   "ID",
+  "FUNCION",
   "INT",
   "FLOAT",
   "BOOLEAN",
   "CHAR",
   "STRING",
+  "INTARRAY",
   "POW",
   "ADD",
   "SUB",

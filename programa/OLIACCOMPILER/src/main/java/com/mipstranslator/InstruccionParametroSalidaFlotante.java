@@ -15,13 +15,13 @@ public class InstruccionParametroSalidaFlotante implements InstruccionMIPS{
     public InstruccionParametroSalidaFlotante(String numeroString, String temporalMIPS){
         Temporal = temporalMIPS;
         Integer numero = Integer.parseInt(numeroString);
-        numero = (numero - 1) * -4;
+        numero = numero * -4;
         DireccionRelativa = numero.toString();
     }
     
     public String toString(){
         String mensaje = "";
-        mensaje = "s.s $" + Temporal + ", " + DireccionRelativa + "($fp)";
+        mensaje += "s.s $" + Temporal + ", " + DireccionRelativa + "($sp)";
         return mensaje;
     }
 }

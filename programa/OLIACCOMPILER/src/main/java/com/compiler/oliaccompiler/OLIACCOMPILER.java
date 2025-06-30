@@ -2,12 +2,14 @@ package com.compiler.oliaccompiler;
 
 import com.lexicalanalyzer.MiLexer;
 import com.lexicalanalyzer.parser;
+import java.io.BufferedReader;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.FileReader;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 @Command(name = "parserapp", description = "Parser de archivos fuente", mixinStandardHelpOptions = true)
@@ -40,13 +42,13 @@ public class OLIACCOMPILER implements Runnable {
                
                 try {
                 // Leer archivo de código intermedio
-                List<String> instrucciones = java.nio.file.Files.readAllLines(output.toPath());
-
 
                 // Crear analizador con la lista de instrucciones
-                com.mipstranslator.AnalizadorCodigoIntermedio analizador = new com.mipstranslator.AnalizadorCodigoIntermedio(instrucciones);
+                com.mipstranslator.MiLexer lexerMIPS = new com.mipstranslator.MiLexer(new FileReader("codigo_intermedio.txt"));
+                com.mipstranslator.parser parserMIPS = new com.mipstranslator.parser(lexerMIPS);
+                parserMIPS.parse();
                 System.out.println("--- pasa el analizador" + output.getPath() + " ---");
-                String codigoMIPS = analizador.generarCodigoMIPS();
+                String codigoMIPS = parserMIPS.traducirACodigoMIPS();
 
                 // Guardar código MIPS
                 System.out.println("--- crea el archivo mips" + output.getPath() + " ---");

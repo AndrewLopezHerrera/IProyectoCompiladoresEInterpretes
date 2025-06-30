@@ -22,7 +22,7 @@ public class InstruccionCargarEnteroArreglo implements InstruccionMIPS {
     public String toString(){
         String mensaje = "";
         mensaje += "lw $s0, " + Direccion + "($fp)\n";
-        mensaje += "sw $" + Registro + ", " + Indice + "($s0)\n";
+        mensaje += "sw $" + Registro + ", " + Indice + "($s0)";
         return mensaje;
     }
 }

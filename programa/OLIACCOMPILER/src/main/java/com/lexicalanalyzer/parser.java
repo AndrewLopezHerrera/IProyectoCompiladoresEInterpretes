@@ -1551,9 +1551,13 @@ class CUP$parser$actions {
             } else if (!line.getTipo().equals("int")) {
                 semantic_error(null, "El operador ++ solo se permite sobre enteros.");
             } else {
-                String temp = parser.nuevoTemporal();
-                parser.codigoIntermedio.add(new OperacionInstr(temp, id, "+", "1"));
-                parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+                String temp1 = parser.nuevoTemporal();
+                String temp2 = parser.nuevoTemporal();
+                String temp3 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp2, id));
+                parser.codigoIntermedio.add(new AsignacionInstr(temp3, "1"));
+                parser.codigoIntermedio.add(new OperacionInstr(temp1, temp2, "+", temp3));
+                parser.codigoIntermedio.add(new AsignacionInstr(id, temp1));
             }
         }
     
@@ -1579,9 +1583,13 @@ class CUP$parser$actions {
             } else if (!line.getEstaInicializado()) {
                 semantic_error(null, "No se ha inicializado el identificador " + id);
             } else {
-                String temp = parser.nuevoTemporal();
-                parser.codigoIntermedio.add(new OperacionInstr(temp, id, "-", "1"));
-                parser.codigoIntermedio.add(new AsignacionInstr(id, temp));
+                String temp1 = parser.nuevoTemporal();
+                String temp2 = parser.nuevoTemporal();
+                String temp3 = parser.nuevoTemporal();
+                parser.codigoIntermedio.add(new AsignacionInstr(temp2, id));
+                parser.codigoIntermedio.add(new AsignacionInstr(temp3, "1"));
+                parser.codigoIntermedio.add(new OperacionInstr(temp1, temp2, "-", temp3));
+                parser.codigoIntermedio.add(new AsignacionInstr(id, temp1));
             }
         }
     
@@ -1930,7 +1938,7 @@ class CUP$parser$actions {
         } else {
             String temp = parser.nuevoTemporal();
             parser.codigoIntermedio.add(new ArrayIndexLoad(nameAux, typeArgAux[1], temp));
-            RESULT = new String[] { "int", nameAux };
+            RESULT = new String[] { "int", temp };
         }
     }
 

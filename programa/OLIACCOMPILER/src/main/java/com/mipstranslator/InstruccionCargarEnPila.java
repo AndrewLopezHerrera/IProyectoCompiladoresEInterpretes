@@ -19,7 +19,7 @@ public class InstruccionCargarEnPila implements InstruccionMIPS{
     
     public String toString(){
         String mensaje = "";
-        mensaje += "sw $" + Registro + ", " + Direccion + "($fp)\n";
+        mensaje += "sw $" + Registro + ", " + Direccion + "($fp)";
         return mensaje;
     }
 }

@@ -13,32 +13,32 @@ public class InstruccionCrearArreglo implements InstruccionMIPS{
     private String Instrucciones;
     private Integer DireccionMemoria;
     private String CantidadMemoria;
-    private String RegistroTresDirecciones;
+    private String RegistroFinal;
     
     public InstruccionCrearArreglo(AdministradorRegistrosEnteros admin, String cantidadMemoria, String registroTresDirecciones){
         Admin = admin;
         DireccionMemoria = 0;
         CantidadMemoria = cantidadMemoria;
         Instrucciones = "";
-        RegistroTresDirecciones = registroTresDirecciones;
+        System.out.println("Registro tres direcciones: " + registroTresDirecciones);
+        RegistroFinal = Admin.RegistrarRegistro(registroTresDirecciones);
     }
     
     public void AgregarNumero(String numero){
         String registroMIPS = Admin.RegistrarRegistro("");
         Instrucciones += "li $" + registroMIPS + ", " + numero + "\n";
-        Instrucciones += "lw $" + registroMIPS + ", " + DireccionMemoria + "$(fp)\n";
+        Instrucciones += "lw $" + registroMIPS + ", " + DireccionMemoria + "($s0)\n";
         DireccionMemoria += 4;
     }
     
     public String toString(){
         String mensaje = "";
-        mensaje += "move $a0, $" + CantidadMemoria + "\n";
+        mensaje += "li $a0, " + DireccionMemoria + "\n";
         mensaje += "li $v0, 9\n";
         mensaje += "syscall\n";
         mensaje += "move $s0, $v0\n";
         mensaje += Instrucciones;
-        String registroMIPS = Admin.RegistrarRegistro(RegistroTresDirecciones);
-        mensaje += "move $" + registroMIPS + ", $v0\n";
+        mensaje += "move $" + RegistroFinal + ", $s0";
         return mensaje;
     }
 }

@@ -21,7 +21,7 @@ public class InstruccionIfGoto implements InstruccionMIPS {
     public String toString() {
         String mensaje = "";
         mensaje += "li $a0, 1\n";
-        mensaje += "beq $" + Destino + ", $a0, " + Destino;
+        mensaje += "beq $" + Temporal + ", $a0, " + Destino;
         return mensaje;
     }
 }

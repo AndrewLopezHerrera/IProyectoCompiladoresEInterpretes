@@ -23,7 +23,8 @@ public class CargarDeArreglo implements InstruccionMIPS {
     public String toString() {
         String mensaje = "";
         mensaje += "lw $a0, " + DireccionRelativa + "($fp)\n";
-        mensaje += "sw $" + Valor + ", " + Indice + "($a0)";
+        mensaje += "add $" + Indice + ", $" + Indice + ", $a0\n";
+        mensaje += "lw $" + Valor + ", 0($" + Indice + ")";
         return mensaje;
     }
     

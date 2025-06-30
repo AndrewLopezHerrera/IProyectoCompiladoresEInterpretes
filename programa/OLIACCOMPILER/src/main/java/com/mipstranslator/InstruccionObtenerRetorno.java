@@ -20,6 +20,6 @@ public class InstruccionObtenerRetorno implements InstruccionMIPS {
     public String toString() {
         return """
                # Obtener valor de retorno
-               move """ + destino + ", $v0\n";
+               move """ + destino + ", $v0";
     }
 }

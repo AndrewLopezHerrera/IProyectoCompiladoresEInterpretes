@@ -19,7 +19,7 @@ public class InstruccionLeerEntero implements InstruccionMIPS {
         String mensaje = "";
         mensaje += "li $v0, 5\n";
         mensaje += "syscall\n";
-        mensaje += "move $" + Temporal + ", $v0\n";
+        mensaje += "move $" + Temporal + ", $v0";
         return mensaje;
     }
 }

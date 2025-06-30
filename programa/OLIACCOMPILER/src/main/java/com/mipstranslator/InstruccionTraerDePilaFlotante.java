@@ -19,7 +19,7 @@ public class InstruccionTraerDePilaFlotante implements InstruccionMIPS {
     
     public String toString(){
         String mensaje = "";
-        mensaje += "l.s $" + Registro + ", " + Direccion + "($fp)\n";
+        mensaje += "l.s $" + Registro + ", " + Direccion + "($fp)";
         return mensaje;
     }
 }

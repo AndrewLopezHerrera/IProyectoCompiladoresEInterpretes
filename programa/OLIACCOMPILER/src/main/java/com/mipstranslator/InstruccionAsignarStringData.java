@@ -19,7 +19,7 @@ public class InstruccionAsignarStringData implements InstruccionMIPS{
     
     public String toString(){
         String mensaje = "";
-        mensaje += Nombre + ": .asciiz " + Datos + "\n";
+        mensaje += Nombre + ": .asciiz " + Datos;
         return mensaje;
     }
 }

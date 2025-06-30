@@ -42,13 +42,14 @@ float_kw           = "float"
 boolean_kw         = "boolean"
 char_kw            = "char"
 string_kw          = "string"
+arrayint_kw        = "intArray"
 
 /* Operadores aritméticos */
 pow                = "**"
 add                = "+"
 sub                = "-"
 mul                = "*"
-div                = "//"
+div                = "/"
 mod                = "~"
 
 /* Operadores lógicos */
@@ -68,12 +69,13 @@ gt                 = ">"
 assign             = "="
 
 /* Arreglos */
-lbrack             = "\["
-rbrack             = "\]"
-pipe               = "\|"
+lbrack             = "["
+rbrack             = "]"
+pipe               = "|"
 comma              = ","
 
 /* Instrucciones especiales */
+function           = "funcion"
 load_kw            = "load"
 store_kw           = "store"
 copy_kw            = "copy"
@@ -118,6 +120,7 @@ colon              = ":"
 {boolean_kw}               { return symbol(sym.BOOLEAN, yytext()); }
 {char_kw}                  { return symbol(sym.CHAR, yytext()); }
 {string_kw}                { return symbol(sym.STRING, yytext()); }
+{arrayint_kw}              { return symbol(sym.INTARRAY, yytext()); }
 
 /* Operadores aritméticos */
 {pow}                      { return symbol(sym.POW, yytext()); }
@@ -150,6 +153,7 @@ colon              = ":"
 {comma}                    { return symbol(sym.COMMA, yytext()); }
 
 /* Instrucciones */
+{function}                 { return symbol(sym.FUNCION, yytext()); }
 {load_kw}                  { return symbol(sym.LOAD, yytext()); }
 {store_kw}                 { return symbol(sym.STORE, yytext()); }
 {copy_kw}                  { return symbol(sym.COPY, yytext()); }

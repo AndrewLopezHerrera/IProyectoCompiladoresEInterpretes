@@ -20,7 +20,7 @@ public class InstruccionIfFalseGoto implements InstruccionMIPS {
     @Override
     public String toString() {
         String mensaje = "";
-        mensaje += "beq $" + Destino + ", $zero, " + Destino;
+        mensaje += "beq $" + Temporal + ", $zero, " + Destino;
         return mensaje;
     }
 }

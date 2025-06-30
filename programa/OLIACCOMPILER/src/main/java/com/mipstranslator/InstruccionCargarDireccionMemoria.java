@@ -19,7 +19,7 @@ public class InstruccionCargarDireccionMemoria implements InstruccionMIPS {
     
     public String toString(){
         String mensaje = "";
-        mensaje += "la $" + Registro + ", " + Valor + "\n";
+        mensaje += "la $" + Registro + ", " + Valor;
         return mensaje;
     }
 }

@@ -22,7 +22,7 @@ public class InstruccionAsignacionLiteralFlotante implements InstruccionMIPS{
     public String toString(){
         String mensaje = "";
         mensaje += "li $" + RegistroEntero + ", " + Valor + "\n";
-        mensaje += "mtc1 " +  RegistroEntero + ", " + RegistroFlotante + "\n";
+        mensaje += "mtc1 $" +  RegistroEntero + ", $" + RegistroFlotante;
         return mensaje;
     }
 }

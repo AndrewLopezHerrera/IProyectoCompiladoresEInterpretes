@@ -19,7 +19,7 @@ public class InstruccionTraerDePilaEntero implements InstruccionMIPS{
     
     public String toString(){
         String mensaje = "";
-        mensaje += "lw $" + Registro + ", " + Direccion + "($fp)\n";
+        mensaje += "lw $" + Registro + ", " + Direccion + "($fp)";
         return mensaje;
     }
 }

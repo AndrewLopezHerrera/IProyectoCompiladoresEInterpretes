@@ -19,7 +19,7 @@ public class InstruccionEscribirString implements InstruccionMIPS{
         String mensaje = "";
         mensaje += "move $a0, $" + Temporal + "\n";
         mensaje += "li $v0, 4\n";
-        mensaje += "syscall\n";
+        mensaje += "syscall";
         return mensaje;
     }
 }
